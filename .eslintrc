@@ -16,6 +16,6 @@
         "@typescript-eslint"
     ],
     "rules": {
-        "semi": "error"
+        "@typescript-eslint/semi": "error"
     }
 }
