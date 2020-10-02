@@ -1,0 +1,24 @@
+{
+  "name": "discord_bot_curator",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ayang4114/discord_bot_curator.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ayang4114/discord_bot_curator/issues"
+  },
+  "homepage": "https://github.com/ayang4114/discord_bot_curator#readme",
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^4.3.0",
+    "@typescript-eslint/parser": "^4.3.0",
+    "eslint": "^7.10.0"
+  }
+}
