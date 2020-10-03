@@ -1,10 +1,29 @@
 import Discord from 'discord.js';
-import path from 'path';
+import {MessageModel} from './MessageStorage';
 
+import path from 'path';
 import env from 'dotenv';
+import mongoose from "mongoose";
 env.config({
   path: path.join(__dirname, '..', '.env')
 });
+
+async function start(): Promise<void> {
+  const url = "mongodb://localhost:27017/";
+  const mongooseOpts = {
+    promiseLibrary: Promise,
+    useUnifiedTopology: true,
+    useNewUrlParser: true,
+    useFindAndModify: false,
+  };
+  mongoose.set('useCreateIndex', true);
+  mongoose.set('runValidators', true);
+  await mongoose.connect(url, mongooseOpts);
+  await MessageModel.deleteMany({});
+  console.log("Connected to the database");
+}
+
+start();
 
 const client = new Discord.Client();
 
@@ -12,13 +31,43 @@ client.on("ready", () => {
   console.log(`Logged in as ${client.user?.tag}!`);
 });
 
+
 // event checks if message has been sent and reacts accordingly
 client.on("message", async (msg) => {
+  if (!msg.author.bot && !msg.content.startsWith("!get-all-messages")) {
+    const doc = await MessageModel.create({
+      author: msg.author.id,
+      message_id: msg.id,
+      channel_id: msg.channel.id
+    });
+    await doc.save();
+    console.log("Saved a new message");
+    await msg.reply("Add the message onto the database");
+  }
+
+  if (msg.content.startsWith("!get-all-messages")) {
+    const messages = await MessageModel.find({});
+    const message_links = await Promise.all(messages.map(async (v) => msg.channel.messages.fetch(v.message_id)));
+    message_links.forEach(link => {
+      msg.reply(link.content);
+    });
+  }
+
+
   if (msg.channel.type === "dm" && !msg.author.bot) {
     if (msg.content === "!commands") {
       msg.reply("Here is a list of available commands!");
     } else {
       msg.reply("Hello <@" + msg.author.id + ">, how can I help you?\nYou can list available commands by typing !commands");
+    }
+  }
+
+  if (msg.content.startsWith("!save-server")) {
+    const server_id = msg.guild?.id;
+    if (server_id != null) {
+      msg.author.send("Saved this server (" + server_id + ") for <@" + msg.author.id + ">");
+    } else {
+      msg.reply("Could not find channel");
     }
   }
 
@@ -35,3 +84,7 @@ client.on("message", async (msg) => {
 });
 
 client.login(process.env.BOT_TOKEN);
+
+process.on("disconnect", async () => {
+  await mongoose.disconnect();
+});
