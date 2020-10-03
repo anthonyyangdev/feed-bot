@@ -27,7 +27,7 @@ export const check_bot_dm_response = async (client: Client, msg: Message): Promi
         await UserModel.findOneAndUpdate({author_id}, {
           $push: {
             keywords: {
-              $each: keywords,
+              $each: keywords.filter(w => !user.keywords.includes(w)),
               $slice: 100
             }
           }
@@ -68,7 +68,7 @@ export const check_bot_dm_response = async (client: Client, msg: Message): Promi
       } else {
         const remaining_msg = msg.content.trim().substring("!set-period".length + 1);
         const time_amount = remaining_msg.match(/[0-9]+/);
-        const time_unit = remaining_msg.match(/(minute|hour|day)s?/);
+        const time_unit = remaining_msg.match(/(hour|day)s?/);
         if (time_amount == null || time_unit == null) {
           await msg.reply("You did not specify a specific amount of time.");
         } else {
@@ -78,8 +78,6 @@ export const check_bot_dm_response = async (client: Client, msg: Message): Promi
             await msg.reply("Cannot set this amount of time");
           } else {
             switch (unit) {
-              case "minute": case "minutes":
-                amount *= 3600; break;
               case "hour": case "hours":
                 amount *= 60 * 3600; break;
               case "day": case "days":
