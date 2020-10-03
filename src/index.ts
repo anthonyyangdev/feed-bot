@@ -5,6 +5,8 @@ import path from 'path';
 import env from 'dotenv';
 import mongoose from "mongoose";
 import {UserModel} from "./collections/UserModel";
+import {check_bot_dm_response} from "./response/bot_dm";
+import {check_bot_channel_response} from "./response/bot_channel";
 env.config({
   path: path.join(__dirname, '..', '.env')
 });
@@ -36,6 +38,10 @@ client.on("ready", () => {
 
 // event checks if message has been sent and reacts accordingly
 client.on("message", async (msg) => {
+
+  const channel_id = msg.channel.id;
+  const author_id = msg.author.id;
+
   // if (!msg.author.bot && !msg.content.startsWith("!get-all-messages")) {
   //   const doc = await MessageModel.create({
   //     author: msg.author.id,
@@ -48,29 +54,47 @@ client.on("message", async (msg) => {
   //   return;
   // }
 
-  if (msg.content.trim() === "!save-channel") {
-    const channel_id = msg.channel.id;
-    const author_id = msg.author.id;
+  await check_bot_dm_response(msg);
+  await check_bot_channel_response(msg);
+
+  if (msg.content.startsWith("!add-keywords")) {
+    const keywords = msg.content.trim()
+          .substring("!add-keywords".length + 1)
+          .split(' ').filter(x => x.length > 0);
     const user = await UserModel.findOne({author_id});
     if (user == null) {
-      const doc = await UserModel.create({
-        author_id,
-        channels: [channel_id],
-        period: 10000000,
-        next_period: 10000000,
-        keywords: []
-      });
-      await doc.save();
+      await msg.reply("You don't have any channels saved");
     } else {
-      await UserModel.findOneAndUpdate({
-        author_id
-      }, {
-        $addToSet: {
-          channels: channel_id
+      await UserModel.findOneAndUpdate({author_id}, {
+        $push: {
+          keywords: {
+            $each: keywords,
+            $slice: 100
+          }
         }
       });
     }
-    await msg.reply("Saved this channel under your name.");
+  }
+  if (msg.content.startsWith("!show-keywords")) {
+    const user = await UserModel.findOne({author_id});
+    if (user == null) {
+      await msg.reply("You don't have any channels saved");
+    } else {
+      await msg.reply("Keywords: " + user.keywords.map(v => "<" + v + ">").join(", "));
+    }
+  }
+  if (msg.content.startsWith("!remove-keywords")) {
+    const keywords = msg.content.trim().substring("!add-keywords".length + 1).split(' ');
+    const user = await UserModel.findOne({author_id});
+    if (user == null) {
+      await msg.reply("You don't have any channels saved");
+    } else {
+      await UserModel.findOneAndUpdate({author_id}, {
+        $pullAll: {
+          keywords: keywords
+        }
+      });
+    }
   }
 
   if (msg.content.trim() === "!my-channels") {
