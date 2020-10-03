@@ -1,13 +1,14 @@
 import Discord from 'discord.js';
-import {MessageModel} from './MessageStorage';
+import { MessageModel } from './MessageStorage';
 
 import path from 'path';
 import env from 'dotenv';
 import mongoose from "mongoose";
-import {UserModel} from "./collections/UserModel";
-import {check_bot_dm_response} from "./response/bot_dm";
-import {check_bot_channel_response} from "./response/bot_channel";
-import {formatDmMessage} from "./message/formatDmMessage";
+import { UserModel } from "./collections/UserModel";
+import { check_bot_dm_response } from "./response/bot_dm";
+import { check_bot_channel_response } from "./response/bot_channel";
+import { formatDmMessage } from "./message/formatDmMessage";
+import { saveMessagesEveryMinute } from "./save";
 
 env.config({
   path: path.join(__dirname, '..', '.env')
@@ -35,6 +36,7 @@ const client = new Discord.Client();
 
 client.on("ready", () => {
   console.log(`Logged in as ${client.user?.tag}!`);
+  saveMessagesEveryMinute();
 });
 
 
@@ -63,19 +65,19 @@ client.on("message", async (msg) => {
   // at the time of periodic check
 
   if (msg.content.trim() === "!get-reactions") {
-    const d : Date = new Date();
+    const d: Date = new Date();
 
     //all messages from last hour
-    const timestamp_thresh : number = d.getTime() - (1000 * 60 * 60);
+    const timestamp_thresh: number = d.getTime() - (1000 * 60 * 60);
     const messages = await MessageModel.find({ created_timestamp: { $gte: timestamp_thresh } }).exec();
 
     for (const iteration of messages) {
-      const m  = await msg.channel.messages.fetch(iteration.message_id);
+      const m = await msg.channel.messages.fetch(iteration.message_id);
       const reactions = m.reactions.cache.size;
       console.log('Message ' + iteration.message_id + ' has ' + reactions.toString() + ' reactions');
 
       const author_id = msg.author.id;
-      const user = await UserModel.findOne({author_id});
+      const user = await UserModel.findOne({ author_id });
 
       if (!(user == null)) {
         //make sure you don't resend a message to a user
