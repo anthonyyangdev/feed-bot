@@ -44,12 +44,12 @@ const client = new Discord.Client();
 //     });
 
 function containsKeywords(content: string, keywords: string[]): boolean {
-  var result = false;
+  let result = false;
   keywords.forEach(keyword => {
     if (content.includes(keyword)) {
       result = result || true;
     }
-  })
+  });
   return result;
 }
 
@@ -121,7 +121,7 @@ client.on("message", async (msg) => {
 
   // at the time of periodic check
 
-  
+
   if (msg.content.trim() === "!get-reactions") {
     const d : Date = new Date();
 
@@ -134,7 +134,7 @@ client.on("message", async (msg) => {
       const reactions = m.reactions.cache.array();
 
       // count number of unique reactions
-      let userSet = new Set();
+      const userSet = new Set();
       for (let i = 0; i < reactions.length; i++) {
         const reaction = reactions[i];
         const users = reaction.users.cache.array();
@@ -143,14 +143,14 @@ client.on("message", async (msg) => {
         }
       }
       const numUniqueReactors = userSet.size;
-      console.log("Message " + iteration.message_id.toString() + " has " + numUniqueReactors.toString() + " reactors")
+      console.log("Message " + iteration.message_id.toString() + " has " + numUniqueReactors.toString() + " reactors");
 
       const author_id = msg.author.id;
       const user = await UserModel.findOne({author_id});
 
       if (!(user == null)) {
         if (numUniqueReactors >= user.reac_threshold && !iteration.users.includes(author_id)) {
-          // Use anthony's message printing code 
+          // Use anthony's message printing code
           msg.author.send(m.url);
           msg.author.send(m.content);
           iteration.users.push(author_id);
@@ -164,6 +164,7 @@ client.on("message", async (msg) => {
 
   if (msg.content.startsWith("!get-all-messages")) {
     const messages = await MessageModel.find({});
+    console.log("Number of messages", messages.length);
     const message_contents = await Promise.all(messages.map(async (v) => {
       return formatDmMessage(client, v.message_id, v.channel_id);
     }));
