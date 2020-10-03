@@ -7,6 +7,7 @@ interface User extends Document {
   channels: string[];
   next_period: number;  // Milliseconds after epoch
   keywords: string[];
+  reac_threshold: number
 }
 
 const UserSchema = new Schema({
@@ -14,7 +15,8 @@ const UserSchema = new Schema({
   period: Number,
   channels: [String],
   next_period: Number,
-  keywords: [String]
+  keywords: [String],
+  reac_threshold: Number
 });
 
 export const UserModel = mongoose.model<User>('User', UserSchema, 'users');

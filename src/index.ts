@@ -36,17 +36,47 @@ client.on("ready", () => {
 
 // event checks if message has been sent and reacts accordingly
 client.on("message", async (msg) => {
-  // if (!msg.author.bot && !msg.content.startsWith("!get-all-messages")) {
-  //   const doc = await MessageModel.create({
-  //     author: msg.author.id,
-  //     message_id: msg.id,
-  //     channel_id: msg.channel.id
-  //   });
-  //   await doc.save();
-  //   console.log("Saved a new message");
-  //   await msg.reply("Add the message onto the database");
-  //   return;
-  // }
+  if (!msg.author.bot && !msg.content.startsWith("!get-all-messages")) {
+    const doc = await MessageModel.create({
+      author: msg.author.id,
+      message_id: msg.id,
+      channel_id: msg.channel.id,
+      created_timestamp: msg.createdTimestamp, 
+      users: []
+    });
+    await doc.save();
+    console.log("Saved a new message");
+    await msg.reply("Add the message onto the database");
+  }
+
+  // at the time of periodic check
+
+  if (msg.content.trim() === "!get-reactions") {
+    var d : Date = new Date();
+
+    //all messages from last hour 
+    var timestamp_thresh : number = d.getTime() - (1000 * 60 * 60);
+    const messages = await MessageModel.find({ created_timestamp: { $gte: timestamp_thresh } }).exec();
+    
+    for (let iteration of messages) {
+      const m  = await msg.channel.messages.fetch(iteration.message_id);
+      const reactions = m.reactions.cache.size;
+      console.log('Message ' + iteration.message_id + ' has ' + reactions.toString() + ' reactions'); 
+      
+      const author_id = msg.author.id;
+      const user = await UserModel.findOne({author_id});
+      
+      if (!(user == null)) {
+        //make sure you don't resend a message to a user
+        if (reactions >= user.reac_threshold && !iteration.users.includes(author_id)) {
+          msg.author.send(m.url);
+          msg.author.send(m.content);
+          iteration.users.push(author_id);
+        }  
+      }
+    }
+  }
+  
 
   if (msg.content.trim() === "!save-channel") {
     const channel_id = msg.channel.id;
@@ -58,7 +88,8 @@ client.on("message", async (msg) => {
         channels: [channel_id],
         period: 10000000,
         next_period: 10000000,
-        keywords: []
+        keywords: [],
+        reac_threshold: 3
       });
       await doc.save();
     } else {
