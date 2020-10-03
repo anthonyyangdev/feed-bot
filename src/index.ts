@@ -58,13 +58,18 @@ client.on("message", async (msg) => {
   await check_bot_channel_response(msg);
 
   if (msg.content.startsWith("!add-keywords")) {
+    /*
+     Regex found from here:
+     https://stackoverflow.com/questions/366202/regex-for-splitting-a-string-using-space-when-not-surrounded-by-single-or-double
+     */
     const keywords = msg.content.trim()
-          .substring("!add-keywords".length + 1)
-          .split(' ').filter(x => x.length > 0);
+      .substring("!add-keywords".length + 1)
+      .match(/[^\s"']+|"([^"]*)"|'([^']*)'/g)
+      ?.map(s => s.startsWith('"') && s.endsWith('"') ? s.substring(1, s.length - 1) : s);
     const user = await UserModel.findOne({author_id});
     if (user == null) {
       await msg.reply("You don't have any channels saved");
-    } else {
+    } else if (keywords != null) {
       await UserModel.findOneAndUpdate({author_id}, {
         $push: {
           keywords: {
