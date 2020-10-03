@@ -4,6 +4,7 @@ import {MessageModel} from './MessageStorage';
 import path from 'path';
 import env from 'dotenv';
 import mongoose from "mongoose";
+import {UserModel} from "./collections/UserModel";
 env.config({
   path: path.join(__dirname, '..', '.env')
 });
@@ -20,6 +21,7 @@ async function start(): Promise<void> {
   mongoose.set('runValidators', true);
   await mongoose.connect(url, mongooseOpts);
   await MessageModel.deleteMany({});
+  await UserModel.deleteMany({});
   console.log("Connected to the database");
 }
 
@@ -34,15 +36,52 @@ client.on("ready", () => {
 
 // event checks if message has been sent and reacts accordingly
 client.on("message", async (msg) => {
-  if (!msg.author.bot && !msg.content.startsWith("!get-all-messages")) {
-    const doc = await MessageModel.create({
-      author: msg.author.id,
-      message_id: msg.id,
-      channel_id: msg.channel.id
-    });
-    await doc.save();
-    console.log("Saved a new message");
-    await msg.reply("Add the message onto the database");
+  // if (!msg.author.bot && !msg.content.startsWith("!get-all-messages")) {
+  //   const doc = await MessageModel.create({
+  //     author: msg.author.id,
+  //     message_id: msg.id,
+  //     channel_id: msg.channel.id
+  //   });
+  //   await doc.save();
+  //   console.log("Saved a new message");
+  //   await msg.reply("Add the message onto the database");
+  //   return;
+  // }
+
+  if (msg.content.trim() === "!save-channel") {
+    const channel_id = msg.channel.id;
+    const author_id = msg.author.id;
+    const user = await UserModel.findOne({author_id});
+    if (user == null) {
+      const doc = await UserModel.create({
+        author_id,
+        channels: [channel_id],
+        period: 10000000,
+        next_period: 10000000,
+        keywords: []
+      });
+      await doc.save();
+    } else {
+      await UserModel.findOneAndUpdate({
+        author_id
+      }, {
+        $addToSet: {
+          channels: channel_id
+        }
+      });
+    }
+    await msg.reply("Saved this channel under your name.");
+  }
+
+  if (msg.content.trim() === "!my-channels") {
+    const author_id = msg.author.id;
+    const user = await UserModel.findOne({author_id});
+    if (user == null) {
+      await msg.reply("You have no saved channels");
+    } else {
+      const channels_list = user.channels.join(", ");
+      await msg.reply("Your saved channels are: <" + channels_list + ">");
+    }
   }
 
   if (msg.content.startsWith("!get-all-messages")) {
@@ -52,7 +91,6 @@ client.on("message", async (msg) => {
       msg.reply(link.content);
     });
   }
-
 
   if (msg.channel.type === "dm" && !msg.author.bot) {
     if (msg.content === "!commands") {
