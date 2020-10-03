@@ -39,7 +39,8 @@ export const check_bot_channel_response = async (msg: Message): Promise<void> =>
         }],
         period: 86400000,
         next_period: Date.now() + 86400000,
-        keywords: []
+        keywords: [],
+        reac_threshold: 3
       });
       await doc.save();
     } else {
