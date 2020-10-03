@@ -116,14 +116,6 @@ client.on("message", async (msg) => {
     });
   }
 
-  if (msg.channel.type === "dm" && !msg.author.bot) {
-    if (msg.content === "!commands") {
-      msg.reply("Here is a list of available commands!");
-    } else {
-      msg.reply("Hello <@" + msg.author.id + ">, how can I help you?\nYou can list available commands by typing !commands");
-    }
-  }
-
   if (msg.content.startsWith("!save-server")) {
     const server_id = msg.guild?.id;
     if (server_id != null) {
