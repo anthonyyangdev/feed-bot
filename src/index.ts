@@ -1,4 +1,4 @@
-import Discord from 'discord.js';
+import Discord, {TextChannel} from 'discord.js';
 import {MessageModel} from './MessageStorage';
 
 import path from 'path';
@@ -7,6 +7,7 @@ import mongoose from "mongoose";
 import {UserModel} from "./collections/UserModel";
 import {check_bot_dm_response} from "./response/bot_dm";
 import {check_bot_channel_response} from "./response/bot_channel";
+import {formatDmMessage} from "./message/formatDmMessage";
 env.config({
   path: path.join(__dirname, '..', '.env')
 });
@@ -91,9 +92,15 @@ client.on("message", async (msg) => {
 
   if (msg.content.startsWith("!get-all-messages")) {
     const messages = await MessageModel.find({});
-    const message_links = await Promise.all(messages.map(async (v) => msg.channel.messages.fetch(v.message_id)));
-    message_links.forEach(link => {
-      msg.reply(link.content);
+    const message_contents = await Promise.all(messages.map(async (v) => {
+      const channel = await client.channels.fetch(v.channel_id);
+      if (channel.type === "text") {
+        return formatDmMessage(client, v.message_id, v.channel_id);
+      }
+    }));
+    message_contents.forEach(content => {
+      if (content != null)
+        msg.reply(content);
     });
   }
 
