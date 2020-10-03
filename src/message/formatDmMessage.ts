@@ -1,5 +1,13 @@
 import {Client, TextChannel} from "discord.js";
 
+/**
+ * Formats a Discord message with id [message_id] found at channel [channel_id].
+ * If the channel or the message cannot be found, this returns null.
+ * Otherwise, it returns the string-formatted message.
+ * @param client
+ * @param message_id
+ * @param channel_id
+ */
 export const formatDmMessage = async (
   client: Client,
   message_id: string,
