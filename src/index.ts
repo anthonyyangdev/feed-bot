@@ -4,7 +4,9 @@ import { MessageModel } from './MessageStorage';
 import path from 'path';
 import env from 'dotenv';
 import mongoose from "mongoose";
-import { UserModel } from "./collections/UserModel";
+import {UserModel} from "./collections/UserModel";
+import {check_bot_dm_response} from "./response/bot_dm";
+import {check_bot_channel_response} from "./response/bot_channel";
 env.config({
   path: path.join(__dirname, '..', '.env')
 });
@@ -71,7 +73,9 @@ async function saveMessages() {
           const doc = await MessageModel.create({
             author: msg.author.id,
             message_id: msg.id,
-            channel_id: msg.channel.id
+            channel_id: msg.channel.id,
+            created_timestamp: msg.createdTimestamp,
+            users: []
           });
           await doc.save();
           console.log("Saved a new message " + msg.content);
@@ -93,12 +97,19 @@ client.on("ready", () => {
 
 // event checks if message has been sent and reacts accordingly
 client.on("message", async (msg) => {
+
+  const channel_id = msg.channel.id;
+  const author_id = msg.author.id;
+
+  if (author_id !== process.env.TEST_USER)
+    return;
+
   if (!msg.author.bot && !msg.content.startsWith("!get-all-messages")) {
     const doc = await MessageModel.create({
       author: msg.author.id,
       message_id: msg.id,
       channel_id: msg.channel.id,
-      created_timestamp: msg.createdTimestamp, 
+      created_timestamp: msg.createdTimestamp,
       users: []
     });
     await doc.save();
@@ -109,68 +120,36 @@ client.on("message", async (msg) => {
   // at the time of periodic check
 
   if (msg.content.trim() === "!get-reactions") {
-    var d : Date = new Date();
+    const d : Date = new Date();
 
-    //all messages from last hour 
-    var timestamp_thresh : number = d.getTime() - (1000 * 60 * 60);
+    //all messages from last hour
+    const timestamp_thresh : number = d.getTime() - (1000 * 60 * 60);
     const messages = await MessageModel.find({ created_timestamp: { $gte: timestamp_thresh } }).exec();
-    
-    for (let iteration of messages) {
+
+    for (const iteration of messages) {
       const m  = await msg.channel.messages.fetch(iteration.message_id);
-      const reactions = m.reactions.cache.size;
-      console.log('Message ' + iteration.message_id + ' has ' + reactions.toString() + ' reactions'); 
-      
+      const reactions = m.reactions.cache;
+      console.log('Message ' + iteration.message_id + ' has ' + reactions.size.toString() + ' reactions');
+
+      const reactions_users = reactions.keyArray();
+      console.log(reactions_users[0]);
+
       const author_id = msg.author.id;
       const user = await UserModel.findOne({author_id});
-      
+
       if (!(user == null)) {
         //make sure you don't resend a message to a user
-        if (reactions >= user.reac_threshold && !iteration.users.includes(author_id)) {
+        if (reactions.size >= user.reac_threshold && !iteration.users.includes(author_id)) {
           msg.author.send(m.url);
           msg.author.send(m.content);
           iteration.users.push(author_id);
-        }  
+        }
       }
     }
   }
-  
 
-  if (msg.content.trim() === "!save-channel") {
-    const channel_id = msg.channel.id;
-    const author_id = msg.author.id;
-    const user = await UserModel.findOne({ author_id });
-    if (user == null) {
-      const doc = await UserModel.create({
-        author_id,
-        channels: [channel_id],
-        period: 10000000,
-        next_period: 10000000,
-        keywords: [],
-        reac_threshold: 3
-      });
-      await doc.save();
-    } else {
-      await UserModel.findOneAndUpdate({
-        author_id
-      }, {
-        $addToSet: {
-          channels: channel_id
-        }
-      });
-    }
-    await msg.reply("Saved this channel under your name.");
-  }
-
-  if (msg.content.trim() === "!my-channels") {
-    const author_id = msg.author.id;
-    const user = await UserModel.findOne({ author_id });
-    if (user == null) {
-      await msg.reply("You have no saved channels");
-    } else {
-      const channels_list = user.channels.join(", ");
-      await msg.reply("Your saved channels are: <" + channels_list + ">");
-    }
-  }
+  await check_bot_dm_response(client, msg);
+  await check_bot_channel_response(msg);
 
   if (msg.content.startsWith("!get-all-messages")) {
     const messages = await MessageModel.find({});
@@ -178,14 +157,6 @@ client.on("message", async (msg) => {
     message_links.forEach(link => {
       msg.reply(link.content);
     });
-  }
-
-  if (msg.channel.type === "dm" && !msg.author.bot) {
-    if (msg.content === "!commands") {
-      msg.reply("Here is a list of available commands!");
-    } else {
-      msg.reply("Hello <@" + msg.author.id + ">, how can I help you?\nYou can list available commands by typing !commands");
-    }
   }
 
   if (msg.content.startsWith("!save-server")) {
