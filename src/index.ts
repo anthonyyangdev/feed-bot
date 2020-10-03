@@ -1,4 +1,4 @@
-import Discord from 'discord.js';
+import Discord, { ReactionManager } from 'discord.js';
 import { MessageModel } from './MessageStorage';
 
 import path from 'path';
@@ -11,9 +11,9 @@ env.config({
   path: path.join(__dirname, '..', '.env')
 });
 
-function callEveryHour() {
-  setInterval(saveMessages, 1000 * 60);
-}
+// function callEveryHour() {
+//   setInterval(saveMessages, 1000 * 60);
+// }
 
 async function start(): Promise<void> {
   const url = "mongodb://localhost:27017/";
@@ -51,45 +51,45 @@ function containsKeywords(content: string, keywords: string[]): boolean {
   return result;
 }
 
-async function saveMessages() {
-  // const channel_id = client.channels;
-  // get all users and apply across users
-  // have it send as a dm to the user
-  // messages mapped by channels, and guild
-  const author_id = client.user?.id;
-  if (author_id != undefined) {
-    const user = await UserModel.findOne({ author_id });
-    if (user != null) {
-      const user_channels = user.channels;
-      const user_keywords = user.keywords;
-      user_channels.forEach(async channel_id => {
-        console.log("Saving messages in channel: " + channel_id);
-        const dc_channel = await client.channels.fetch(channel_id);
-        // get the discord Channel object with channel_id
-        // need to check timing of message
-        const msg_collector = await new Discord.MessageCollector(dc_channel as Discord.TextChannel, msg => containsKeywords(msg.content, user_keywords));
-        await msg_collector.checkEnd();
-        msg_collector.collected.forEach(async msg => {
-          const doc = await MessageModel.create({
-            author: msg.author.id,
-            message_id: msg.id,
-            channel_id: msg.channel.id,
-            created_timestamp: msg.createdTimestamp,
-            users: []
-          });
-          await doc.save();
-          console.log("Saved a new message " + msg.content);
-        });
-        console.log("Done saving.");
-      });
-      console.log("Saved messages");
-    }
-  } else {
-    console.log("User not found");
-  }
-}
+// async function saveMessages() {
+//   // const channel_id = client.channels;
+//   // get all users and apply across users
+//   // have it send as a dm to the user
+//   // messages mapped by channels, and guild
+//   const author_id = client.user?.id;
+//   if (author_id != undefined) {
+//     const user = await UserModel.findOne({ author_id });
+//     if (user != null) {
+//       const user_channels = user.channels;
+//       const user_keywords = user.keywords;
+//       user_channels.forEach(async channel_id => {
+//         console.log("Saving messages in channel: " + channel_id);
+//         const dc_channel = await client.channels.fetch(channel_id);
+//         // get the discord Channel object with channel_id
+//         // need to check timing of message
+//         const msg_collector = await new Discord.MessageCollector(dc_channel as Discord.TextChannel, msg => containsKeywords(msg.content, user_keywords));
+//         await msg_collector.checkEnd();
+//         msg_collector.collected.forEach(async msg => {
+//           const doc = await MessageModel.create({
+//             author: msg.author.id,
+//             message_id: msg.id,
+//             channel_id: msg.channel.id,
+//             created_timestamp: msg.createdTimestamp,
+//             users: []
+//           });
+//           await doc.save();
+//           console.log("Saved a new message " + msg.content);
+//         });
+//         console.log("Done saving.");
+//       });
+//       console.log("Saved messages");
+//     }
+//   } else {
+//     console.log("User not found");
+//   }
+// }
 
-callEveryHour();
+// callEveryHour();
 
 client.on("ready", () => {
   console.log(`Logged in as ${client.user?.tag}!`);
@@ -119,27 +119,36 @@ client.on("message", async (msg) => {
 
   // at the time of periodic check
 
+  
   if (msg.content.trim() === "!get-reactions") {
     const d : Date = new Date();
 
-    //all messages from last hour
+    //hardcoded - scans messages from last hour
     const timestamp_thresh : number = d.getTime() - (1000 * 60 * 60);
     const messages = await MessageModel.find({ created_timestamp: { $gte: timestamp_thresh } }).exec();
 
     for (const iteration of messages) {
       const m  = await msg.channel.messages.fetch(iteration.message_id);
-      const reactions = m.reactions.cache;
-      console.log('Message ' + iteration.message_id + ' has ' + reactions.size.toString() + ' reactions');
+      const reactions = m.reactions.cache.array();
 
-      const reactions_users = reactions.keyArray();
-      console.log(reactions_users[0]);
+      // count number of unique reactions
+      let userSet = new Set();
+      for (let i = 0; i < reactions.length; i++) {
+        const reaction = reactions[i];
+        const users = reaction.users.cache.array();
+        for (let j = 0; j < users.length; j++) {
+          userSet.add(users[j].id);
+        }
+      }
+      const numUniqueReactors = userSet.size;
+      console.log("Message " + iteration.message_id.toString() + " has " + numUniqueReactors.toString() + " reactors")
 
       const author_id = msg.author.id;
       const user = await UserModel.findOne({author_id});
 
       if (!(user == null)) {
-        //make sure you don't resend a message to a user
-        if (reactions.size >= user.reac_threshold && !iteration.users.includes(author_id)) {
+        if (numUniqueReactors >= user.reac_threshold && !iteration.users.includes(author_id)) {
+          // Use anthony's message printing code 
           msg.author.send(m.url);
           msg.author.send(m.content);
           iteration.users.push(author_id);
