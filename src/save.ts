@@ -8,16 +8,12 @@ import { UserModel } from "./collections/UserModel";
 import { check_bot_dm_response } from "./response/bot_dm";
 import { check_bot_channel_response } from "./response/bot_channel";
 import { formatDmMessage } from "./message/formatDmMessage";
+import {ChannelBody} from "./collections/ChannelBody";
 
-var channels;
-
-type channel = {
-  channel_id: String,
-  server_id: String,
-}
+let channels;
 
 export function saveMessagesEveryMinute() {
-  setInterval(saveUserMessages, 1000 * 60);
+  setInterval(saveAllMessages, 1000 * 60);
 }
 
 // get the user data in the database
@@ -25,14 +21,14 @@ export function saveMessagesEveryMinute() {
 // then, go through channels
 // then, collect messages in channels that have they keyword
 // send messages to user and add to database
-// what'll probably be better is to get all the messages from the 
+// what'll probably be better is to get all the messages from the
 // message model, filter out so you get only the ones that fit the criteria
 // and return those
 const client = new Discord.Client();
 
 async function containsKeywords(content: string, keywords: string[]) {
-  var result = false;
-  for (var i = 0; i < keywords.length; i++) {
+  let result = false;
+  for (let i = 0; i < keywords.length; i++) {
     if (content.includes(keywords[i])) {
       result = result || true;
     }
@@ -40,20 +36,20 @@ async function containsKeywords(content: string, keywords: string[]) {
   return result;
 }
 
-async function saveUserMessages(id: String, user_channels: channel[],
+async function saveUserMessages(id: string, user_channels: ChannelBody[],
   user_keywords: string[]) {
   const messages = await MessageModel.find({});
   channels = user_channels;
-  for (var i = 0; i < channels.length; i++) {
+  for (let i = 0; i < channels.length; i++) {
     const channel = channels[i];
     console.log("Saving messages in channel: " + channel.channel_id);
     const dc_channel = await client.channels.fetch(String(channel.channel_id));
-    // need to add a time check too 
-    // make sure not to save duplicate 
+    // need to add a time check too
+    // make sure not to save duplicate
     // use with lowest priority number will be at front of priority queue
     // peek head of priority queue, if number for user
     // in peek is less than current time, then update user
-    // pop and dequeue, then requeue next time it has to be updated, current time 
+    // pop and dequeue, then requeue next time it has to be updated, current time
     // + period number
     const msg_collector = await new Discord.MessageCollector(dc_channel as Discord.TextChannel, msg => containsKeywords(msg.content, user_keywords));
     await msg_collector.checkEnd();
