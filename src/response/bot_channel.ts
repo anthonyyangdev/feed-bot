@@ -16,8 +16,8 @@ export const check_bot_channel_response = async (msg: Message): Promise<void> =>
       const doc = await UserModel.create({
         author_id,
         channels: [channel_id],
-        period: 10000000,
-        next_period: 10000000,
+        period: 86400000,
+        next_period: Date.now() + 86400000,
         keywords: []
       });
       await doc.save();
