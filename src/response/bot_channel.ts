@@ -18,7 +18,10 @@ export const check_bot_channel_response = async (msg: Message): Promise<void> =>
     } else {
       await UserModel.findOneAndUpdate({author_id}, {
         $pull: {
-          channels: channel_id
+          channels: {
+            channel_id,
+            server_id: msg.guild?.id
+          }
         }
       });
       await msg.reply("This channel has been removed your saved list of channels");
@@ -30,7 +33,10 @@ export const check_bot_channel_response = async (msg: Message): Promise<void> =>
     if (user == null) {
       const doc = await UserModel.create({
         author_id,
-        channels: [channel_id],
+        channels: [{
+          channel_id,
+          server_id: msg.guild?.id ?? ""
+        }],
         period: 86400000,
         next_period: Date.now() + 86400000,
         keywords: []
@@ -41,7 +47,10 @@ export const check_bot_channel_response = async (msg: Message): Promise<void> =>
         author_id
       }, {
         $addToSet: {
-          channels: channel_id
+          channels: {
+            channel_id,
+            server_id: msg.guild?.id ?? ""
+          }
         }
       });
     }

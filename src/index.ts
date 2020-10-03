@@ -154,8 +154,9 @@ client.on("message", async (msg) => {
     } else {
       await msg.reply("Your saved channels are: ");
       for (const c of user.channels) {
-        const channel_data = await client.channels.fetch(c);
-        await msg.reply(channel_data.toString());
+        const channel_data = await client.channels.fetch(c.channel_id);
+        const guild_data = c.server_id ? await client.guilds.fetch(c.server_id) : "None";
+        await msg.reply(`Server: ${guild_data.toString()}, Channel: ${channel_data.toString()}`);
       }
     }
   }

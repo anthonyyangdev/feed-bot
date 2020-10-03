@@ -4,7 +4,7 @@ import * as mongoose from "mongoose";
 interface User extends Document {
   author_id: string;
   period: number;
-  channels: string[];
+  channels: ChannelBody[];
   next_period: number;  // Milliseconds after epoch
   keywords: string[];
 }
@@ -12,7 +12,10 @@ interface User extends Document {
 const UserSchema = new Schema({
   author_id: String,
   period: Number,
-  channels: [String],
+  channels: [{
+    channel_id: String,
+    server_id: String,
+  }],
   next_period: Number,
   keywords: [String]
 });

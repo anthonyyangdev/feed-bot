@@ -6,7 +6,7 @@ import {Message} from "discord.js";
  */
 export const check_bot_dm_response = async (msg: Message): Promise<void> => {
   if (msg.channel.type === "dm" && !msg.author.bot) {
-    if (msg.content === "!commands") {
+    if (msg.content.trim() === "!commands") {
       await msg.reply("Here is a list of available commands!");
     } else {
       await msg.reply("Hello <@" + msg.author.id + ">, how can I help you?\nYou can list available commands by typing" +
