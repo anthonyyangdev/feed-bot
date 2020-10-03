@@ -42,6 +42,10 @@ client.on("message", async (msg) => {
   const channel_id = msg.channel.id;
   const author_id = msg.author.id;
 
+  if (author_id !== process.env.TEST_USER)
+    return;
+
+
   // if (!msg.author.bot && !msg.content.startsWith("!get-all-messages")) {
   //   const doc = await MessageModel.create({
   //     author: msg.author.id,
@@ -102,14 +106,57 @@ client.on("message", async (msg) => {
     }
   }
 
-  if (msg.content.trim() === "!my-channels") {
-    const author_id = msg.author.id;
+  if (msg.content.trim() === "!end-feed") {
+    await UserModel.findOneAndRemove({author_id});
+    await msg.author.send("You've been removed by the system. Goodbye 😢");
+  }
+
+  if (msg.content.trim().startsWith("!set-period")) {
     const user = await UserModel.findOne({author_id});
     if (user == null) {
       await msg.reply("You have no saved channels");
     } else {
-      const channels_list = user.channels.join(", ");
-      await msg.reply("Your saved channels are: <" + channels_list + ">");
+      const remaining_msg = msg.content.trim().substring("!set-period".length + 1);
+      const time_amount = remaining_msg.match(/[0-9]+/);
+      const time_unit = remaining_msg.match(/(minute|hour|day)s?/);
+      if (time_amount == null || time_unit == null) {
+        await msg.reply("You did not specify a specific amount of time.");
+      } else {
+        let amount = Number.parseInt(time_amount[0]);
+        const unit = time_unit[0];
+        if (isNaN(amount)) {
+          await msg.reply("Cannot set this amount of time");
+        } else {
+          switch (unit) {
+            case "minute": case "minutes":
+              amount *= 3600; break;
+            case "hour": case "hours":
+              amount *= 60 * 3600; break;
+            case "day": case "days":
+              amount *= 24 * 60 * 3600; break;
+          }
+          await UserModel.findOneAndUpdate({author_id}, {
+            $set: {
+              period: amount,
+              next_period: Math.min(Date.now() + amount, user.next_period)
+            }
+          });
+        }
+      }
+    }
+  }
+
+
+  if (msg.content.trim() === "!my-channels") {
+    const user = await UserModel.findOne({author_id});
+    if (user == null) {
+      await msg.reply("You have no saved channels");
+    } else {
+      await msg.reply("Your saved channels are: ");
+      for (const c of user.channels) {
+        const channel_data = await client.channels.fetch(c);
+        await msg.reply(channel_data.toString());
+      }
     }
   }
 

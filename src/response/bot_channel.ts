@@ -10,6 +10,21 @@ export const check_bot_channel_response = async (msg: Message): Promise<void> =>
   if (!channel_id) { return; }
 
   const author_id = msg.author.id;
+
+  if (msg.content.trim() === "!remove-channel") {
+    const user = await UserModel.findOne({author_id});
+    if (user == null) {
+      await msg.reply("You do not have any saved channels");
+    } else {
+      await UserModel.findOneAndUpdate({author_id}, {
+        $pull: {
+          channels: channel_id
+        }
+      });
+      await msg.reply("This channel has been removed your saved list of channels");
+    }
+  }
+
   if (msg.content.trim() === "!save-channel") {
     const user = await UserModel.findOne({author_id});
     if (user == null) {
