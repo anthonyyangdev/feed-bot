@@ -3,7 +3,7 @@ import {GuildChannel, TextChannel, User} from "discord.js";
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const keyword_extractor = require("keyword-extractor");
 
-type UserAnalytics = {
+export type UserAnalytics = {
   username: string;
   id: string;
   activeness: number;
@@ -16,6 +16,7 @@ type UserAnalytics = {
 
 export type ChannelAnalytics = {
   channel_type: string;
+  channel_id: string;
   channel_name: string;
   created_date: number;
   users: UserAnalytics[];
@@ -82,6 +83,7 @@ export function collectTextChannelAnalytics(
   const user_data_array = Object.keys(users_on_channel).map(k => users_on_channel[k]);
   return {
     channel_type: "text",
+    channel_id: channel.id,
     channel_name: channel.name,
     common_words: Object.keys(word_frequency)
       .map<[string, number]>(word => [word, word_frequency[word]])
