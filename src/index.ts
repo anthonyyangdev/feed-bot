@@ -103,7 +103,7 @@ client.on("message", async (msg) => {
   const channel_id = msg.channel.id;
   const author_id = msg.author.id;
 
-  if (author_id !== process.env.TEST_USER)
+  if (author_id !== process.env.TEST_USER || msg.author.bot)
     return;
 
   if (!msg.author.bot && !msg.content.startsWith("!get-all-messages")) {

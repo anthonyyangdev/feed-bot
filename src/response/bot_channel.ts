@@ -1,5 +1,8 @@
 import {Message} from "discord.js";
 import {UserModel} from "../collections/UserModel";
+import {ChannelAnalytics, collectTextChannelAnalytics} from "../analytics/analytics";
+import tmp from 'tmp';
+import fs from 'fs';
 
 /**
  * Executes commands that should run only when messaging in some channel in a server.
@@ -10,6 +13,29 @@ export const check_bot_channel_response = async (msg: Message): Promise<void> =>
   if (!channel_id) { return; }
 
   const author_id = msg.author.id;
+
+  if (msg.content.startsWith("!get-analytics")) {
+    const channels = msg.guild?.channels.cache;
+    if (channels != null) {
+      const analytics: ChannelAnalytics[] = [];
+      for (const channel of channels) {
+        const data = collectTextChannelAnalytics(msg.author, channel[0], channel[1]);
+        if (data) analytics.push(data);
+      }
+      const temp_json = tmp.fileSync({postfix: '.json'});
+      fs.writeFileSync(temp_json.name, JSON.stringify({
+        number_of_text_channels: analytics.length,
+        channels: analytics
+      }, undefined, 2));
+      await msg.author.send(`
+      Hello ${msg.author.username}!
+      
+      Here's some information about the server: ${msg.guild?.name}:
+      `, {
+        files: [temp_json.name]
+      });
+    }
+  }
 
   if (msg.content.trim() === "!remove-channel") {
     const user = await UserModel.findOne({author_id});
