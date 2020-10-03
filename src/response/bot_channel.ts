@@ -1,6 +1,10 @@
 import {Message} from "discord.js";
 import {UserModel} from "../collections/UserModel";
 
+/**
+ * Executes commands that should run only when messaging in some channel in a server.
+ * @param msg
+ */
 export const check_bot_channel_response = async (msg: Message): Promise<void> => {
   const channel_id = msg.channel.id;
   if (!channel_id) { return; }
