@@ -1,22 +1,18 @@
 import {Message} from "discord.js";
-import {handleAnalytics} from "../analytics/handleAnalytics";
-import {User, UserModel} from "../collections/UserModel";
-import PriorityQueue from 'js-priority-queue';
-import {addToQueue} from '../periodicChecker';
+import {ChannelCommands} from "../commands/channels/ChannelCommands";
+import {AnalysisCommands} from "../commands/analysis/AnalysisCommands";
 
 /**
  * Executes commands that should run only when messaging in some channel in a server.
  * @param msg
- * @param q
  */
-export const check_bot_channel_response = async (msg: Message, q : PriorityQueue<[User, number]>): Promise<void> => {
+export const check_bot_channel_response = async (msg: Message): Promise<void> => {
   const channel_id = msg.channel.id;
   if (!channel_id) { return; }
 
-  const msg_input = msg.content.trim();
-  const author_id = msg.author.id;
-  const server_id = msg.guild?.id ?? "Unknown";
+  await AnalysisCommands.create.checkAndRun(msg);
 
+<<<<<<< HEAD
   if (msg_input.startsWith("!get-analytics")) {
     await handleAnalytics(msg.guild, msg_input, msg.author);
   }
@@ -56,4 +52,8 @@ export const check_bot_channel_response = async (msg: Message, q : PriorityQueue
     }
     await msg.reply("Saved this channel under your name.");
   }
+=======
+  await ChannelCommands.add.checkAndRun(msg);
+  await ChannelCommands.remove.checkAndRun(msg);
+>>>>>>> 1064ed014dc89d10fdf2335659df06134554ab59
 };

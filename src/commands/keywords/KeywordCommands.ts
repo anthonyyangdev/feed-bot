@@ -1,7 +1,7 @@
 import {CommandInterface} from "../CommandInterface";
 import {Message} from "discord.js";
 import {parseKeywords} from "./parseKeywords";
-import {UserModel} from "../collections/UserModel";
+import {UserModel} from "../../collections/UserModel";
 
 /**
  * Contains commands related to keywords.
@@ -13,7 +13,7 @@ export const KeyboardCommands: {
 } = {
   show: {
     command: "!show-keywords",
-    description: "",
+    description: "Show all keywords on the user's profile.",
     async checkAndRun(msg: Message): Promise<void> {
       const msg_input = msg.content.trim();
       const author_id = msg.author.id;

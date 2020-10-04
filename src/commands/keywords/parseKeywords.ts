@@ -3,7 +3,7 @@ const isQuoted = (s: string) => s.startsWith('"') && s.endsWith('"');
 
 /**
  * Parses the input content into its keyword arguments, i.e. the arguments after the
- * command substring.
+ * commands substring.
  * @param msg_content: A trimmed string.
  * @param command: A substring that [msg_content] starts with.
  */
