@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "nodemon --watch 'src/**/*.ts' --ignore 'test/**/*.test.ts' --exec \"ts-node\" ./src/index.ts",
     "start": "node dist/index.js",
-    "prestart": "npm run build",
+    "prestart": "npm install && npm run build",
     "build": "tsc -p .",
     "clean": "rm -rf dist/",
     "test": "mocha --full-trace -r ts-node/register --timeout 1000 'test/**/*.test.ts'",
