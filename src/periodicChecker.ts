@@ -3,7 +3,7 @@ import { MessageModel } from "./MessageStorage";
 import { formatDmMessage } from "./message/formatDmMessage";
 import { User, UserModel } from "./collections/UserModel";
 import PriorityQueue from 'js-priority-queue';
-import {ChannelBody} from './collections/ChannelBody'
+import { ChannelBody } from './collections/ChannelBody'
 
 // creating priority queue 
 export function createQueue(): PriorityQueue<[User, number]> {
@@ -24,7 +24,7 @@ export function checkUserUpdateEachMinute(q: PriorityQueue<[User, number]>, clie
 }
 
 async function checkUserUpdates(q: PriorityQueue<[User, number]>, client: Client) {
-//   console.log("Starting check...");
+  //   console.log("Starting check...");
   if (q.length != 0) {
     let user = q.peek();
     console.log("User is " + user[0].author_id);
@@ -35,7 +35,7 @@ async function checkUserUpdates(q: PriorityQueue<[User, number]>, client: Client
       console.log("Done updating");
     }
   }
-//   console.log("Done checking");
+  //   console.log("Done checking");
 }
 
 async function updateUser(q: PriorityQueue<[User, number]>, user: User, client: Client) {
@@ -52,54 +52,64 @@ async function updateUser(q: PriorityQueue<[User, number]>, user: User, client: 
   sendMsgsWithReactions(dequeued_user, client);
 }
 
+function containsKeywords(content: string, keywords: string[]): boolean {
+  let result = false;
+  keywords.forEach(keyword => {
+    if (content.includes(keyword)) {
+      result = result || true;
+    }
+  });
+  return result;
+}
 
 // periodic check will call this function to update user's dms with new messages crossing the threshold
 // function assumes that the user was already dequeued, its next period value was updated, and it was re-queued  
 async function sendMsgsWithReactions(user: User, client: Client) {
-    await console.log("in sendMSG");
-    const author_id = user.author_id;
-    const user_discord = client.users.fetch(author_id);
-    const user_database = await UserModel.findOne({author_id});
+  await console.log("in sendMSG");
+  const author_id = user.author_id;
+  const user_discord = client.users.fetch(author_id);
+  const user_database = await UserModel.findOne({ author_id });
 
-    // CAN CHANGE - hard coded to scan messages in last hour
-    const d = new Date();
-    const timestamp_thresh: number = d.getTime() - (1000 * 60 * 60);
+  // CAN CHANGE - hard coded to scan messages in last hour
+  const d = new Date();
+  const timestamp_thresh: number = d.getTime() - (1000 * 60 * 60);
 
-    let channelArray : string[] = [];
-    let serverArray: string[] = [];
-    if (user_database != null) {
-        channelArray = user_database.channels.map(c => c.channel_id);
-        serverArray = user_database.channels.map(c => c.server_id);
-    } else {
-        console.log('User was null');
-    }
+  let channelArray: string[] = [];
+  let serverArray: string[] = [];
+  if (user_database != null) {
+    channelArray = user_database.channels.map(c => c.channel_id);
+    serverArray = user_database.channels.map(c => c.server_id);
+  } else {
+    console.log('User was null');
+  }
 
-    const messages = await MessageModel.find(
+  const messages = await MessageModel.find(
     {
-        'channel.channel_id': {
-            $in: channelArray
-        },
-        'channel.server_id': {
-            $in: serverArray
-        },
-            created_timestamp: {
-            $gte: timestamp_thresh
-        }
+      'channel.channel_id': {
+        $in: channelArray
+      },
+      'channel.server_id': {
+        $in: serverArray
+      },
+      created_timestamp: {
+        $gte: timestamp_thresh
+      }
     });
 
-    // for each new message 
-    for (const iteration of messages) {
-        const channel = await client.channels.fetch(iteration.channel.channel_id);
-        if (channel.type != "text") {
-            console.log('Error finding text channel in sendMsgsWithReactions');
-            continue
-        }
-        const m  = await (channel as TextChannel).messages.cache.get(iteration.message_id);
-        if (m == undefined) {
-            console.log('Error finding message in sendMsgsWithReactions');
-            continue
-        }
-        const reactions = m.reactions.cache.array();
+  // for each new message 
+  for (const iteration of messages) {
+    const channel = await client.channels.fetch(iteration.channel.channel_id);
+    if (channel.type != "text") {
+      console.log('Error finding text channel in sendMsgsWithReactions');
+      continue
+    }
+
+    const m = await (channel as TextChannel).messages.cache.get(iteration.message_id);
+    if (m == undefined) {
+      console.log('Error finding message in sendMsgsWithReactions');
+      continue
+    }
+    const reactions = m.reactions.cache.array();
 
     // count number of unique reactions
     let userSet = new Set();
@@ -113,12 +123,13 @@ async function sendMsgsWithReactions(user: User, client: Client) {
     const numUniqueReactors = userSet.size;
     console.log("Message " + iteration.message_id.toString() + " has " + numUniqueReactors.toString() + " reactors")
 
+    // if message contains a keyword and 
     // if number of unique reactions crosses threshold, and message hasn't been sent to user before, send message to user
-    if (numUniqueReactors >= user.reac_threshold && !iteration.users.includes(author_id)) {
-        const message = await formatDmMessage(client, iteration.message_id, iteration.channel.channel_id);
-        (await user_discord).send(message);
-        iteration.users.push(author_id);
-    }
+    if (numUniqueReactors >= user.reac_threshold && !iteration.users.includes(author_id) && containsKeywords(m.content, user.keywords)) {
+      const message = await formatDmMessage(client, iteration.message_id, iteration.channel.channel_id);
+      (await user_discord).send(message);
+      iteration.users.push(author_id);
     }
   }
+}
 
