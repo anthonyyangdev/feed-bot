@@ -14,10 +14,6 @@ export const check_bot_dm_response = async (client: Client, msg: Message): Promi
   const author_id = msg.author.id;
   const msg_input = msg.content.trim();
   if (msg_input.startsWith("!add-keywords")) {
-    /*
-     Regex found from here:
-     https://stackoverflow.com/questions/366202/regex-for-splitting-a-string-using-space-when-not-surrounded-by-single-or-double
-     */
     const keywords = parseKeywords(msg_input, "!add-keywords");
     const user = await UserModel.findOne({author_id});
     if (user == null) {
