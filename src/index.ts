@@ -174,6 +174,29 @@ client.on("message", async (msg) => {
     });
   }
 
+  if (msg.content.trim() === "!get-mention-messages") {
+    const messages = await MessageModel.find({});
+    const message_contents = await Promise.all(messages.map(async (v) => msg.channel.messages.fetch(v.message_id)));
+    message_contents.forEach(contents => {
+      if (contents.mentions.users.firstKey() != undefined) {
+        const userKeyArr = contents.mentions.users.keyArray();
+        userKeyArr.forEach(userKey => {
+          if (contents.content.includes("" + userKey) && userKey == msg.author.id) {
+            msg.reply(contents.content)
+          }
+        })
+      }
+      else if (contents.mentions.roles.firstKey() != undefined && msg.member != null) {
+        const roleKeyArr = msg.member.roles.cache.keyArray();
+        roleKeyArr.forEach(roleKey => {
+          if (contents.content.includes("" + roleKey)) {
+            msg.reply(contents.content);
+          }
+        });
+      }
+    });
+  }
+
   if (msg.content.startsWith("!save-server")) {
     const server_id = msg.guild?.id;
     if (server_id != null) {
