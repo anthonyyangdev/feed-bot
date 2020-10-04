@@ -11,14 +11,14 @@ Commands are run on the server or in the DM with the bot. Some commands can only
 
 These commands can only be run when in a DM with the bot. They include most of the settings command, such as adding/removing keywords or setting the period that the bot sends messages.
 
-
-| Command                        | Description                                                                                                                                     |
-|--------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------|
-| !add-keywords [...keywords]    | Adds keywords onto the user's profile for the bot to use when curating content. Multi-word phrases can be added by using double-quotation marks. |
-| !remove-keywords [...keywords] | Removes keywords from the user's profile. Multi-word phrases can be added by using double-quotation marks.                                      |
-| !show-keywords                 | Shows all keywords on the user's profile.                                                                                                        |
-| !end-feed                      | Drops the users profile information from the bot.                                                                                               |
-
+| Command                        | Description                                                                                                                                           |
+|--------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------|
+| !add-keywords [...keywords]    | Add keywords onto the user's profile for the bot to use when curating content. Multi-word phrases can be added by using double-quotation marks.       |
+| !remove-keywords [...keywords] | Removes keywords from the user's profile. Multi-word phrases can be added by using double-quotation marks.                                            |
+| !show-keywords                 | Show all keywords on the user's profile.                                                                                                              |
+| !set-period [amount] [unit]    | Sets the time period that the user receives content from the bot. The [amount] can be any positive integer. The [unit] can be: hour, hours, day, days |
+| !show-period                   | Shows the time period that the user receives content from the bot.                                                                                    |
+| !end-feed                      | Drops the users profile information from the bot.                                                                                                     |
 
 ### Channel-Only
 
