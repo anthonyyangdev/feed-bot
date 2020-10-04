@@ -39,6 +39,7 @@
     "@types/mongodb": "^3.5.27",
     "discord.js": "^12.3.1",
     "dotenv": "^8.2.0",
+    "js-priority-queue": "^0.1.5",
     "mongodb": "^3.6.2",
     "mongoose": "^5.10.7",
     "node": "^14.13.0"

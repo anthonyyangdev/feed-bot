@@ -8,7 +8,7 @@ import { UserModel } from "./collections/UserModel";
 import { check_bot_dm_response } from "./response/bot_dm";
 import { check_bot_channel_response } from "./response/bot_channel";
 import { formatDmMessage } from "./message/formatDmMessage";
-import { saveMessagesEveryMinute } from "./save";
+import { checkUserUpdateEachMinute } from './periodicChecker';
 
 env.config({
   path: path.join(__dirname, '..', '.env')
@@ -36,7 +36,7 @@ const client = new Discord.Client();
 
 client.on("ready", () => {
   console.log(`Logged in as ${client.user?.tag}!`);
-  saveMessagesEveryMinute();
+  checkUserUpdateEachMinute();
 });
 
 

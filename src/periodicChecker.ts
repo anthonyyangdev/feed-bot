@@ -1,4 +1,4 @@
-import { Message, Client } from "discord.js";
+import { Message, Client, TextChannel } from "discord.js";
 import { MessageModel } from "./MessageStorage";
 import { formatDmMessage } from "./message/formatDmMessage";
 import { User, UserModel } from "./collections/UserModel";
@@ -18,29 +18,56 @@ export function addToQueue(q: PriorityQueue<[User, number]>, user: User) {
   q.queue(newElement);
 };
 
-function requeue(q: PriorityQueue<[User, number]>, user: User) {
+export function checkUserUpdateEachMinute() {
+  setInterval(checkUserUpdates, 1000);
+}
 
+async function checkUserUpdates(q: PriorityQueue<[User, number]>, client: Client) {
+  console.log("Starting check...");
+  let user = q.peek();
+  while (user[1] < new Date().getTime()) {
+    updateUser(q, user[0], client);
+  }
+  console.log("Done checking");
+}
+
+function updateUser(q: PriorityQueue<[User, number]>, user: User, client: Client) {
+  //dequeue and requeue user
+  let dequeued_item = q.dequeue();
+  let dequeued_user = dequeued_item[0];
+  const old_period = dequeued_item[1];
+  const new_number = old_period + dequeued_user.period;
+  dequeued_user.next_period = new_number;
+  addToQueue(q, dequeued_user);
+
+  // update user with messages that have new reactions
+  sendMsgsWithReactions(dequeued_user, client);
 }
 
 
 // periodic check will call this function to update user's dms with new messages crossing the threshold
 // function assumes that the user was already dequeued, its next period value was updated, and it was re-queued  
-export async function sendMsgsWithReactions(user: User, client: Client, msg: Message) {
+async function sendMsgsWithReactions(user: User, client: Client) {
   const user_id = user.author_id;
   const user_discord = client.users.fetch(user_id);
 
-  // TEMPORARY - hard coded to scan messages in last hour
+  // CAN CHANGE - hard coded to scan messages in last hour
   const d = new Date();
   const timestamp_thresh: number = d.getTime() - (1000 * 60 * 60);
   const messages = await MessageModel.find({ created_timestamp: { $gte: timestamp_thresh } }).exec();
 
-  // //AFTER INTEGRATION WITH THOMAS CODE - scans messages between last update and now 
-  // const timestamp_thresh : number = user.next_period - user.period;
-  // const messages = await MessageModel.find({ created_timestamp: { $gte: timestamp_thresh } }).exec();
-
   // for each new message 
   for (const iteration of messages) {
-    const m = await msg.channel.messages.fetch(iteration.message_id);
+    const channel = await client.channels.fetch(iteration.channel_id);
+    if (channel.type != "text") {
+      console.log('Error finding text channel in sendMsgsWithReactions');
+      continue
+    }
+    const m = await (channel as TextChannel).messages.cache.get(iteration.message_id);
+    if (m == undefined) {
+      console.log('Error finding message in sendMsgsWithReactions');
+      continue
+    }
     const reactions = m.reactions.cache.array();
 
     // count number of unique reactions
@@ -58,8 +85,14 @@ export async function sendMsgsWithReactions(user: User, client: Client, msg: Mes
     // if number of unique reactions crosses threshold, and message hasn't been sent to user before, send message to user
     if (numUniqueReactors >= user.reac_threshold && !iteration.users.includes(user_id)) {
       const message = await formatDmMessage(client, iteration.message_id, iteration.channel_id);
-      client.users.fetch(user_id).then((user) => { user.send(message) });
+      (await user_discord).send(message);
       iteration.users.push(user_id);
     }
   }
-} 
+}
+
+
+// PERIOD CHECK FUNCTION 
+// @param Client
+// every x minutes, peek queue. if number is < current time, call updateUser(). repeat until peek queue doesn't show a user who needs to be updated. 
+
