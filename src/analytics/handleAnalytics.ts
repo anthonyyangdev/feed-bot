@@ -1,6 +1,6 @@
 import {ChannelAnalytics, collectTextChannelAnalytics, UserAnalytics} from "./analytics";
 import {arrayMax} from "../util/arrayTools";
-import tmp, {file} from "tmp";
+import tmp from "tmp";
 import fs from "fs";
 import {Message} from "discord.js";
 import {createPieChart, createTimeGraph} from "./graphs";
