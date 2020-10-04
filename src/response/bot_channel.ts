@@ -41,8 +41,8 @@ export const check_bot_channel_response = async (msg: Message, q : PriorityQueue
       const doc = await UserModel.create({
         author_id,
         channels: [{channel_id, server_id}],
-        period: 86400000,
-        next_period: Date.now() + 86400000,
+        period: 10000, //10000 for demo; 86400000 orig
+        next_period: Date.now() + 10000, //10000 for demo; 86400000 orig
         keywords: [],
         reac_threshold: 3
       });
