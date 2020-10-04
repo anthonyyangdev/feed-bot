@@ -1,10 +1,12 @@
 import {Document, Schema} from "mongoose";
 import * as mongoose from "mongoose";
+import {ChannelBody} from './collections/ChannelBody'
+
 
 interface Message extends Document {
   author: string;
   message_id: string;
-  channel_id: string;
+  channel: ChannelBody;
   created_timestamp: number;
   users: string[];
 }
@@ -12,7 +14,10 @@ interface Message extends Document {
 const MessageSchema = new Schema({
   author: String,
   message_id: String,
-  channel_id: String,
+  channel: {
+    channel_id: String,
+    server_id: String,
+  },
   created_timestamp: Number,
   users: [String],
   createdAt: {
