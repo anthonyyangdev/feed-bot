@@ -56,14 +56,36 @@ async function updateUser(q: PriorityQueue<[User, number]>, user: User, client: 
 // periodic check will call this function to update user's dms with new messages crossing the threshold
 // function assumes that the user was already dequeued, its next period value was updated, and it was re-queued  
 async function sendMsgsWithReactions(user: User, client: Client) {
-  await console.log("in sendMSG");
-  const user_id = user.author_id;
-  const user_discord = client.users.fetch(user_id);
+    await console.log("in sendMSG");
+    const author_id = user.author_id;
+    const user_discord = client.users.fetch(author_id);
+    const user_database = await UserModel.findOne({author_id});
 
-  // CAN CHANGE - hard coded to scan messages in last hour
-  const d = new Date();
-  const timestamp_thresh: number = d.getTime() - (1000 * 60 * 60);
-  const messages = await MessageModel.find({ created_timestamp: { $gte: timestamp_thresh } }).exec();
+    // CAN CHANGE - hard coded to scan messages in last hour
+    const d = new Date();
+    const timestamp_thresh: number = d.getTime() - (1000 * 60 * 60);
+
+    let channelArray : string[] = [];
+    let serverArray: string[] = [];
+    if (user_database != null) {
+        channelArray = user_database.channels.map(c => c.channel_id);
+        serverArray = user_database.channels.map(c => c.server_id);
+    } else {
+        console.log('User was null');
+    }
+
+    const messages = await MessageModel.find(
+    {
+        'channel.channel_id': {
+            $in: channelArray
+        },
+        'channel.server_id': {
+            $in: serverArray
+        },
+            created_timestamp: {
+            $gte: timestamp_thresh
+        }
+    });
 
     // for each new message 
     for (const iteration of messages) {
@@ -92,10 +114,10 @@ async function sendMsgsWithReactions(user: User, client: Client) {
     console.log("Message " + iteration.message_id.toString() + " has " + numUniqueReactors.toString() + " reactors")
 
     // if number of unique reactions crosses threshold, and message hasn't been sent to user before, send message to user
-    if (numUniqueReactors >= user.reac_threshold && !iteration.users.includes(user_id)) {
+    if (numUniqueReactors >= user.reac_threshold && !iteration.users.includes(author_id)) {
         const message = await formatDmMessage(client, iteration.message_id, iteration.channel.channel_id);
         (await user_discord).send(message);
-        iteration.users.push(user_id);
+        iteration.users.push(author_id);
     }
     }
   }

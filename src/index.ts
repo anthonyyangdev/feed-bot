@@ -132,54 +132,54 @@ client.on("message", async (msg) => {
   }
 
 
-  if (msg.content.trim() === '!test-message-filter') {
-    console.log('reached function');
+  // if (msg.content.trim() === '!test-message-filter') {
+  //   console.log('reached function');
 
-    const author_id = msg.author.id;
-    const user_database = await UserModel.findOne({author_id});
+  //   const author_id = msg.author.id;
+  //   const user_database = await UserModel.findOne({author_id});
 
-    const timestamp_thresh : number = Date.now() - (1000 * 60 * 60);
-    let channelArray : string[] = [];
-    let serverArray: string[] = [];
-    if (user_database != null) {
-      channelArray = user_database.channels.map(c => c.channel_id);
-      serverArray = user_database.channels.map(c => c.server_id);
-    } else {
-      console.log('User was null');
-    }
+  //   const timestamp_thresh : number = Date.now() - (1000 * 60 * 60);
+  //   let channelArray : string[] = [];
+  //   let serverArray: string[] = [];
+  //   if (user_database != null) {
+  //     channelArray = user_database.channels.map(c => c.channel_id);
+  //     serverArray = user_database.channels.map(c => c.server_id);
+  //   } else {
+  //     console.log('User was null');
+  //   }
 
-    console.log('found channel Array of size' + channelArray.length);
+  //   console.log('found channel Array of size' + channelArray.length);
 
-    const messages = await MessageModel.find(
-      {
-        'channel.channel_id': {
-          $in: channelArray
-        },
-        'channel.server_id': {
-          $in: serverArray
-        },
-        created_timestamp: {
-          $gte: timestamp_thresh
-        }
-      });
+  //   const messages = await MessageModel.find(
+  //     {
+  //       'channel.channel_id': {
+  //         $in: channelArray
+  //       },
+  //       'channel.server_id': {
+  //         $in: serverArray
+  //       },
+  //       created_timestamp: {
+  //         $gte: timestamp_thresh
+  //       }
+  //     });
 
-    console.log('filtered to messages of length' + messages.length);
+  //   console.log('filtered to messages of length' + messages.length);
 
-    for (const mess of messages) {
-      const channel = await client.channels.fetch(mess.channel.channel_id);
-      if (channel.type != "text") {
-        console.log('Error finding text channel in sendMsgsWithReactions');
-        continue;
-      }
-      const m  = await (channel as TextChannel).messages.cache.get(mess.message_id);
-      if (m == undefined) {
-        console.log('Error finding message in sendMsgsWithReactions');
-        continue;
-      }
-      console.log(m.toString());
-    }
+  //   for (const mess of messages) {
+  //     const channel = await client.channels.fetch(mess.channel.channel_id);
+  //     if (channel.type != "text") {
+  //       console.log('Error finding text channel in sendMsgsWithReactions');
+  //       continue;
+  //     }
+  //     const m  = await (channel as TextChannel).messages.cache.get(mess.message_id);
+  //     if (m == undefined) {
+  //       console.log('Error finding message in sendMsgsWithReactions');
+  //       continue;
+  //     }
+  //     console.log(m.toString());
+  //   }
 
-  }
+  // }
 
   // at the time of periodic check
 
