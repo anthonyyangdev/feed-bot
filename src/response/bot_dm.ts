@@ -1,6 +1,6 @@
 import {Message, Client} from "discord.js";
 import {UserModel} from "../collections/UserModel";
-import {parseKeywords} from "../keywords/parseKeywords";
+import {KeyboardCommands} from "../keywords/KeywordCommands";
 
 /**
  * Executes commands that should run only when chatting with the bot in a DM.
@@ -13,43 +13,10 @@ export const check_bot_dm_response = async (client: Client, msg: Message): Promi
 
   const author_id = msg.author.id;
   const msg_input = msg.content.trim();
-  if (msg_input.startsWith("!add-keywords")) {
-    const keywords = parseKeywords(msg_input, "!add-keywords");
-    const user = await UserModel.findOne({author_id});
-    if (user == null) {
-      await msg.reply("You don't have any channels saved");
-    } else if (keywords != null) {
-      await UserModel.findOneAndUpdate({author_id}, {
-        $push: {
-          keywords: {
-            $each: keywords.filter(w => !user.keywords.includes(w)),
-            $slice: 100
-          }
-        }
-      });
-    }
-  }
-  if (msg_input.startsWith("!show-keywords")) {
-    const user = await UserModel.findOne({author_id});
-    if (user == null) {
-      await msg.reply("You don't have any channels saved");
-    } else {
-      await msg.reply("Keywords: " + user.keywords.map(v => "<" + v + ">").join(", "));
-    }
-  }
-  if (msg_input.startsWith("!remove-keywords")) {
-    const keywords = parseKeywords(msg_input, "!remove-keywords");
-    const user = await UserModel.findOne({author_id});
-    if (user == null) {
-      await msg.reply("You don't have any channels saved");
-    } else {
-      await UserModel.findOneAndUpdate({author_id}, {
-        $pullAll: {
-          keywords: keywords
-        }
-      });
-    }
-  }
+
+  await KeyboardCommands.show.checkAndRun(msg);
+  await KeyboardCommands.add.checkAndRun(msg);
+  await KeyboardCommands.remove.checkAndRun(msg);
 
   if (msg_input.startsWith("!set-reaction-threshold")) {
     const tokenized = msg_input.split(" ");
