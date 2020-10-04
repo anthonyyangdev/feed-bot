@@ -5,14 +5,14 @@ import { User, UserModel } from "./collections/UserModel";
 import PriorityQueue from 'js-priority-queue';
 import { ChannelBody } from './collections/ChannelBody'
 
-// creating priority queue 
+// creating priority queue
 export function createQueue(): PriorityQueue<[User, number]> {
   const compareUsers = function (a: [User, number], b: [User, number]) { return a[1] - b[1]; };
   let q = new PriorityQueue({ comparator: compareUsers });
   return q;
 }
 
-// adding a new user to priority queue 
+// adding a new user to priority queue
 export function addToQueue(q: PriorityQueue<[User, number]>, user: User) {
   const d = new Date();
   const newElement: [User, number] = [user, d.getTime() + user.period];
@@ -63,7 +63,7 @@ function containsKeywords(content: string, keywords: string[]): boolean {
 }
 
 // periodic check will call this function to update user's dms with new messages crossing the threshold
-// function assumes that the user was already dequeued, its next period value was updated, and it was re-queued  
+// function assumes that the user was already dequeued, its next period value was updated, and it was re-queued
 async function sendMsgsWithReactions(user: User, client: Client) {
   await console.log("in sendMSG");
   const author_id = user.author_id;
@@ -96,7 +96,7 @@ async function sendMsgsWithReactions(user: User, client: Client) {
       }
     });
 
-  // for each new message 
+  // for each new message
   for (const iteration of messages) {
     const channel = await client.channels.fetch(iteration.channel.channel_id);
     if (channel.type != "text") {
@@ -123,13 +123,60 @@ async function sendMsgsWithReactions(user: User, client: Client) {
     const numUniqueReactors = userSet.size;
     console.log("Message " + iteration.message_id.toString() + " has " + numUniqueReactors.toString() + " reactors")
 
-    // if message contains a keyword and 
+    // if message contains a keyword and
     // if number of unique reactions crosses threshold, and message hasn't been sent to user before, send message to user
     if (numUniqueReactors >= user.reac_threshold && !iteration.users.includes(author_id) && containsKeywords(m.content, user.keywords)) {
       const message = await formatDmMessage(client, iteration.message_id, iteration.channel.channel_id);
       (await user_discord).send(message);
-      iteration.users.push(author_id);
+      const message_id = iteration.message_id;
+      await MessageModel.findOneAndUpdate({
+        message_id
+      }, {
+          $addToSet: {
+          users: author_id
+        }
+      });
     }
+
+    if (m.mentions.users.firstKey() != undefined && !iteration.users.includes(author_id)) {
+      const userKeyArr = m.mentions.users.keyArray();
+      for (const userKey of userKeyArr) {
+        if (m.content.includes("" + userKey) && userKey == author_id) {
+          const message = await formatDmMessage(client, iteration.message_id, iteration.channel.channel_id);
+          (await user_discord).send(message);
+          const message_id = iteration.message_id;
+          await MessageModel.findOneAndUpdate({
+            message_id
+          }, {
+              $addToSet: {
+                users: author_id
+              }
+          });
+        }
+      }
+    }
+    else if (m.mentions.roles.firstKey() != undefined && m.guild != null && !iteration.users.includes(author_id)) {
+      const userGuildMem = m.guild.members.cache.get(author_id);
+      if (userGuildMem != undefined) {
+        const roleKeyArr = userGuildMem.roles.cache.keyArray();
+        for (const roleKey in roleKeyArr) {
+          if (m.content.includes("" + roleKey)) {
+            const message = await formatDmMessage(client, iteration.message_id, iteration.channel.channel_id);
+            if (message != null) {
+              (await user_discord).send(message);
+            }
+            const message_id = iteration.message_id;
+            await MessageModel.findOneAndUpdate({
+              message_id
+            }, {
+                $addToSet: {
+                  users: author_id
+                }
+            });
+          }
+        }
+      }
+    }
+
   }
 }
-
