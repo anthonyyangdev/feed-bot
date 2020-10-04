@@ -38,7 +38,6 @@ export function collectTextChannelAnalytics(
 ): ChannelAnalytics | null {
   if (channel.type !== "text") return null;
 
-  console.log("Getting analysis");
   const users_on_channel: Record<string, UserAnalytics> = {};
   channel.members.forEach(member => {
     if (member.user.bot) return;

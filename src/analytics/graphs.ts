@@ -32,24 +32,24 @@ export async function createTimeGraph(
         display: true,
         text: title,
       },
-    },
-    scales: {
-      xAxes: [{
-        type: "time",
-        time: {
-          parser: "MM/DD/YYYY",
-        },
-        scaleLabel: {
-          display: true,
-          labelString: "Date"
-        }
-      }],
-      yAxes: [{
-        scaleLabel: {
-          display: true,
-          labelString: "Number of posts"
-        }
-      }]
+      scales: {
+        xAxes: [{
+          type: "time",
+          time: {
+            parser: "MM/DD/YYYY",
+          },
+          scaleLabel: {
+            display: true,
+            labelString: "Date"
+          }
+        }],
+        yAxes: [{
+          scaleLabel: {
+            display: true,
+            labelString: "Number of posts"
+          }
+        }]
+      }
     }
   };
 

@@ -50,6 +50,24 @@ const getUserActivities = (analytics: ChannelAnalytics[]): {
   };
 };
 
+const testTimeGraph: Record<string, [string, number][]> = {
+  "work-related": [
+    ["9/1/2020", 423],
+    ["9/7/2020", 413],
+    ["9/14/2020", 403],
+    ["9/26/2020", 503],
+    ["10/1/2020", 483],
+    ["10/4/2020", 493],
+  ],
+  "general": [
+    ["9/1/2020", 123],
+    ["9/7/2020", 213],
+    ["9/14/2020", 65],
+    ["9/26/2020", 103],
+    ["10/1/2020", 133],
+    ["10/4/2020", 100],
+  ]
+};
 
 const getTimeGraph = async (server_name: string, analytics: ChannelAnalytics[]): Promise<string> => {
   // This will create data for the number of posts per day.
@@ -67,23 +85,36 @@ const getTimeGraph = async (server_name: string, analytics: ChannelAnalytics[]):
       });
     }
   });
-  const post_count_param: Record<string, [string, number][]> = {};
-  Object.keys(post_count).forEach(channel => {
-    post_count_param[channel] = Object.keys(post_count[channel]).map(time => {
-      return [time, post_count[channel][time]];
+  let post_count_param: Record<string, [string, number][]> = {};
+  if (process.env.DEVELOPER_MODE === 'true') {
+    post_count_param = testTimeGraph;
+  } else {
+    Object.keys(post_count).forEach(channel => {
+      post_count_param[channel] = Object.keys(post_count[channel]).map(time => {
+        return [time, post_count[channel][time]];
+      });
     });
-  });
+  }
   const temp_timeline = tmp.fileSync({postfix: '.png', prefix: server_name + '.posts_per_day.'});
   await createTimeGraph(post_count_param, temp_timeline.name, "Posts per Day across Channels");
   return temp_timeline.name;
 };
 
+const testPieChartData: [string, number][] = [
+  ["Anthony Yang", 4],
+  ["munchkin", 3],
+  ["thomas", 6],
+  ["Meekol", 5],
+];
 
 const createPieGraph = async (server_name: string, average_user_activities: Record<string, number>): Promise<string> => {
   const temp_png = tmp.fileSync({postfix: '.png', prefix: server_name + '.relative_engagement.'});
-  await createPieChart(Object.keys(average_user_activities).map<[string, number]>(username => {
+  const data =
+    process.env.DEVELOPER_MODE === 'true' ? testPieChartData
+    : Object.keys(average_user_activities).map<[string, number]>(username => {
     return [username, average_user_activities[username]];
-  }), temp_png.name, "Engagement");
+  });
+  await createPieChart(data, temp_png.name, "Engagement");
   return temp_png.name;
 };
 
