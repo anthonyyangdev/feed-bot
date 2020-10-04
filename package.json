@@ -23,10 +23,12 @@
   "homepage": "https://github.com/ayang4114/discord_bot_curator#readme",
   "devDependencies": {
     "@types/chai": "^4.2.12",
+    "@types/js-priority-queue": "0.0.5",
     "@types/mocha": "^8.0.3",
     "@types/mongoose": "^5.7.36",
     "@types/node": "^14.11.2",
     "@types/tmp": "^0.2.0",
+    "@types/word-wrap": "^1.2.1",
     "@typescript-eslint/eslint-plugin": "^4.3.0",
     "@typescript-eslint/parser": "^4.3.0",
     "chai": "^4.2.0",
@@ -41,10 +43,11 @@
     "discord.js": "^12.3.1",
     "dotenv": "^8.2.0",
     "keyword-extractor": "0.0.19",
+    "tmp": "^0.2.1",
+    "js-priority-queue": "^0.1.5",
     "mongodb": "^3.6.2",
     "mongoose": "^5.10.7",
     "node": "^14.13.0",
-    "tmp": "^0.2.1",
-    "wordpos": "^2.0.0"
+    "word-wrap": "^1.2.3"
   }
 }

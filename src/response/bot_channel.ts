@@ -1,12 +1,15 @@
 import {Message} from "discord.js";
-import {UserModel} from "../collections/UserModel";
 import {handleAnalytics} from "../analytics/handleAnalytics";
+import {User, UserModel} from "../collections/UserModel";
+import PriorityQueue from 'js-priority-queue';
+import {addToQueue} from '../periodicChecker';
 
 /**
  * Executes commands that should run only when messaging in some channel in a server.
  * @param msg
+ * @param q
  */
-export const check_bot_channel_response = async (msg: Message): Promise<void> => {
+export const check_bot_channel_response = async (msg: Message, q : PriorityQueue<[User, number]>): Promise<void> => {
   const channel_id = msg.channel.id;
   if (!channel_id) { return; }
 
@@ -48,6 +51,7 @@ export const check_bot_channel_response = async (msg: Message): Promise<void> =>
         reac_threshold: 3
       });
       await doc.save();
+      addToQueue(q, doc);
     } else {
       await UserModel.findOneAndUpdate({
         author_id
