@@ -117,7 +117,14 @@ async function sendMsgsWithReactions(user: User, client: Client) {
     if (numUniqueReactors >= user.reac_threshold && !iteration.users.includes(author_id)) {
         const message = await formatDmMessage(client, iteration.message_id, iteration.channel.channel_id);
         (await user_discord).send(message);
-        iteration.users.push(author_id);
+        const message_id = iteration.message_id;
+        await MessageModel.findOneAndUpdate({
+            message_id
+          }, {
+            $addToSet: {
+              users: author_id
+            }
+          });
     }
     }
   }
