@@ -49,12 +49,12 @@ let q : PriorityQueue<[User, number]> = createQueue();
 //     });
 
 function containsKeywords(content: string, keywords: string[]): boolean {
-  var result = false;
+  let result = false;
   keywords.forEach(keyword => {
     if (content.includes(keyword)) {
       result = result || true;
     }
-  })
+  });
   return result;
 }
 
@@ -127,6 +127,9 @@ client.on("message", async (msg) => {
     await msg.reply("Add the message onto the database");
   }
 
+  // at the time of periodic check
+
+
   if (msg.content.trim() === "!get-reactions") {
     console.log('reached function');
     const author_id = msg.author.id;
@@ -161,7 +164,7 @@ client.on("message", async (msg) => {
       console.log('fetched message and reactions');
       
       // count number of unique reactions
-      let userSet = new Set();
+      const userSet = new Set();
       for (let i = 0; i < reactions.length; i++) {
           const reaction = reactions[i];
           const users = reaction.users.cache.array();
@@ -196,6 +199,7 @@ client.on("message", async (msg) => {
 
   if (msg.content.startsWith("!get-all-messages")) {
     const messages = await MessageModel.find({});
+    console.log("Number of messages", messages.length);
     const message_contents = await Promise.all(messages.map(async (v) => {
       return formatDmMessage(client, v.message_id, v.channel_id);
     }));
