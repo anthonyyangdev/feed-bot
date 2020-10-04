@@ -4,7 +4,13 @@ import tmp from "tmp";
 import fs from "fs";
 import {Message} from "discord.js";
 
+/**
+ * Handles the message response where the user wants to get analytics data about a server.
+ * The data will be DM'd to the user as a JSON file.
+ * @param msg
+ */
 export const handleAnalytics = async (msg: Message): Promise<void> => {
+  const server_name = msg.guild?.name;
   const channels = msg.guild?.channels.cache;
   if (channels != null) {
     const analytics: ChannelAnalytics[] = [];
@@ -50,7 +56,7 @@ export const handleAnalytics = async (msg: Message): Promise<void> => {
       }
     });
 
-    const temp_json = tmp.fileSync({postfix: '.json'});
+    const temp_json = tmp.fileSync({postfix: '.json', prefix: server_name});
     fs.writeFileSync(temp_json.name, JSON.stringify({
       server_name: msg.guild?.name,
       number_of_text_channels: analytics.length,
