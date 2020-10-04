@@ -24,7 +24,7 @@ export function checkUserUpdateEachMinute(q: PriorityQueue<[User, number]>, clie
 }
 
 async function checkUserUpdates(q: PriorityQueue<[User, number]>, client: Client) {
-  console.log("Starting check...");
+//   console.log("Starting check...");
   if (q.length != 0) {
     let user = q.peek();
     console.log("User is " + user[0].author_id);
@@ -35,7 +35,7 @@ async function checkUserUpdates(q: PriorityQueue<[User, number]>, client: Client
       console.log("Done updating");
     }
   }
-  console.log("Done checking");
+//   console.log("Done checking");
 }
 
 async function updateUser(q: PriorityQueue<[User, number]>, user: User, client: Client) {

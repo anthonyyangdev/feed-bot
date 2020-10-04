@@ -57,6 +57,26 @@ export const check_bot_dm_response = async (client: Client, msg: Message): Promi
     }
   }
 
+  console.log("almost there");
+
+  if (msg.content.startsWith("!set-reaction-threshold")) {
+    const tokenized = msg.content.split(" ");
+    const time = parseInt(tokenized[1]);
+    if (!isNaN(time)) {
+      const user = await UserModel.findOne({author_id});
+      if (user != null) {
+        await UserModel.findOneAndUpdate({author_id}, {
+          $set: {
+            reac_threshold: time,
+          }
+        });
+      } else {
+        await msg.reply("Could not find your user in database");
+      }
+    } else {
+      await msg.reply("Please include valid integer after command")
+    }
+  } 
   if (msg.content.trim() === "!end-feed") {
     await UserModel.findOneAndRemove({author_id});
     await msg.author.send("You've been removed by the system. Goodbye 😢");

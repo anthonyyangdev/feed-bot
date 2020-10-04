@@ -131,6 +131,13 @@ client.on("message", async (msg) => {
     await msg.reply("Add the message onto the database");
   }
 
+  // if (msg.content.trim() === '!test-reac-threshold') {
+  //   const author_id = msg.author.id;
+  //   const user = await UserModel.findOne({author_id});
+  //   if (user != null) {
+  //     console.log(user.reac_threshold);
+  //   }
+  // }
 
   // if (msg.content.trim() === '!test-message-filter') {
   //   console.log('reached function');
@@ -248,6 +255,7 @@ client.on("message", async (msg) => {
   //   }
   // }
 
+  
   await check_bot_dm_response(client, msg);
   await check_bot_channel_response(msg, q);
 
