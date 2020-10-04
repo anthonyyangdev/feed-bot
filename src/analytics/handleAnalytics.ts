@@ -1,6 +1,6 @@
 import {ChannelAnalytics, collectTextChannelAnalytics, UserAnalytics} from "./analytics";
 import {arrayMax} from "../util/arrayTools";
-import tmp from "tmp";
+import tmp, {file} from "tmp";
 import fs from "fs";
 import {Message} from "discord.js";
 import {createPieChart, createTimeGraph} from "./graphs";
@@ -116,6 +116,7 @@ const createJsonDump = async (
 export const handleAnalytics = async (msg: Message): Promise<void> => {
   const server_name = msg.guild?.name ?? "Server Unknown";
   const channels = msg.guild?.channels.cache;
+  const wants = msg.content.match(/\b(timeline|engagement|nojson)\b/g);
   if (channels != null) {
     const analytics: ChannelAnalytics[] = [];
     for (const channel of channels) {
@@ -123,17 +124,21 @@ export const handleAnalytics = async (msg: Message): Promise<void> => {
       if (data) analytics.push(data);
     }
 
+    const files_to_send: string[] = [];
     const {average, best} = getUserActivities(analytics);
-    const temp_timeline = await getTimeGraph(server_name, analytics);
-    const temp_png = await createPieGraph(server_name, average);
-    const temp_json = await createJsonDump(server_name, analytics, average, best);
+    if (!wants || !wants.includes("nojson"))
+      files_to_send.push(await createJsonDump(server_name, analytics, average, best));
+    if (wants && wants.includes("engagement"))
+      files_to_send.push(await createPieGraph(server_name, average));
+    if (wants && wants.includes("timeline"))
+      files_to_send.push(await getTimeGraph(server_name, analytics));
 
     await msg.author.send(`
       Hello ${msg.author.username}!
       
       Here's some information about the server: ${msg.guild?.name}:
       `, {
-      files: [temp_json, temp_png, temp_timeline]
+      files: files_to_send
     });
   }
 };
