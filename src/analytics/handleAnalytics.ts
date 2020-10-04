@@ -116,7 +116,22 @@ const createJsonDump = async (
 export const handleAnalytics = async (msg: Message): Promise<void> => {
   const server_name = msg.guild?.name ?? "Server Unknown";
   const channels = msg.guild?.channels.cache;
-  const wants = msg.content.match(/\b(timeline|engagement|nojson)\b/g);
+  const wants = msg.content.match(/\b(timeline|engagement|nojson|help)\b/g);
+
+  if (wants && wants.includes("help")) {
+    await msg.author.send(`
+      Hi ${msg.author.username}!
+
+      To get analytics, run \`!get-analytics\` on a channel where I'm added.
+      You can also get additional analytics by adding one or more keywords to the command.
+      For example, if you want a pie graph showing engagement, add \`engagement\`
+      like this:
+      \`!get-analytics engagement\`
+      
+      The available keywords are: \`engagement\`, \`timeline\`, and \`nojson\` 
+      `);
+    return;
+  }
   if (channels != null) {
     const analytics: ChannelAnalytics[] = [];
     for (const channel of channels) {
@@ -133,12 +148,26 @@ export const handleAnalytics = async (msg: Message): Promise<void> => {
     if (wants && wants.includes("timeline"))
       files_to_send.push(await getTimeGraph(server_name, analytics));
 
-    await msg.author.send(`
-      Hello ${msg.author.username}!
+    if (files_to_send.length === 0) {
+      await msg.author.send(`
+      Hi ${msg.author.username}!
+      
+      To get analytics, run \`!get-analytics\` on a channel where I'm added.
+      You can also get additional analytics by adding one or more keywords to the command.
+      For example, if you want a pie graph showing engagement, add \`engagement\`
+      like this:
+      \`!get-analytics engagement\`
+      
+      The available keywords are: \`engagement\`, \`timeline\`, and \`nojson\` 
+      `);
+    } else {
+      await msg.author.send(`
+      Hi ${msg.author.username}!
       
       Here's some information about the server: ${msg.guild?.name}:
       `, {
-      files: files_to_send
-    });
+        files: files_to_send
+      });
+    }
   }
 };
