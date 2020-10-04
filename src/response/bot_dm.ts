@@ -8,16 +8,16 @@ import {UserModel} from "../collections/UserModel";
  */
 export const check_bot_dm_response = async (client: Client, msg: Message): Promise<void> => {
 
-  const author_id = msg.author.id;
-
   if (msg.channel.type !== "dm" || msg.author.bot) return;
 
-  if (msg.content.startsWith("!add-keywords")) {
+  const author_id = msg.author.id;
+  const msg_input = msg.content.trim();
+  if (msg_input.startsWith("!add-keywords")) {
     /*
      Regex found from here:
      https://stackoverflow.com/questions/366202/regex-for-splitting-a-string-using-space-when-not-surrounded-by-single-or-double
      */
-    const keywords = msg.content.trim()
+    const keywords = msg_input
       .substring("!add-keywords".length + 1)
       .match(/[^\s"']+|"([^"]*)"|'([^']*)'/g)
       ?.map(s => s.startsWith('"') && s.endsWith('"') ? s.substring(1, s.length - 1) : s);
@@ -35,7 +35,7 @@ export const check_bot_dm_response = async (client: Client, msg: Message): Promi
       });
     }
   }
-  if (msg.content.startsWith("!show-keywords")) {
+  if (msg_input.startsWith("!show-keywords")) {
     const user = await UserModel.findOne({author_id});
     if (user == null) {
       await msg.reply("You don't have any channels saved");
@@ -43,8 +43,8 @@ export const check_bot_dm_response = async (client: Client, msg: Message): Promi
       await msg.reply("Keywords: " + user.keywords.map(v => "<" + v + ">").join(", "));
     }
   }
-  if (msg.content.startsWith("!remove-keywords")) {
-    const keywords = msg.content.trim().substring("!add-keywords".length + 1).split(' ');
+  if (msg_input.startsWith("!remove-keywords")) {
+    const keywords = msg_input.substring("!add-keywords".length + 1).split(' ');
     const user = await UserModel.findOne({author_id});
     if (user == null) {
       await msg.reply("You don't have any channels saved");
@@ -59,8 +59,8 @@ export const check_bot_dm_response = async (client: Client, msg: Message): Promi
 
   console.log("almost there");
 
-  if (msg.content.startsWith("!set-reaction-threshold")) {
-    const tokenized = msg.content.split(" ");
+  if (msg_input.startsWith("!set-reaction-threshold")) {
+    const tokenized = msg_input.split(" ");
     const time = parseInt(tokenized[1]);
     if (!isNaN(time)) {
       const user = await UserModel.findOne({author_id});
@@ -74,20 +74,20 @@ export const check_bot_dm_response = async (client: Client, msg: Message): Promi
         await msg.reply("Could not find your user in database");
       }
     } else {
-      await msg.reply("Please include valid integer after command")
+      await msg.reply("Please include valid integer after command");
     }
-  } 
-  if (msg.content.trim() === "!end-feed") {
+  }
+  if (msg_input === "!end-feed") {
     await UserModel.findOneAndRemove({author_id});
     await msg.author.send("You've been removed by the system. Goodbye 😢");
   }
 
-  if (msg.content.trim().startsWith("!set-period")) {
+  if (msg_input.startsWith("!set-period")) {
     const user = await UserModel.findOne({author_id});
     if (user == null) {
       await msg.reply("You have no saved channels");
     } else {
-      const remaining_msg = msg.content.trim().substring("!set-period".length + 1);
+      const remaining_msg = msg_input.substring("!set-period".length + 1);
       const time_amount = remaining_msg.match(/[0-9]+/);
       const time_unit = remaining_msg.match(/(hour|day)s?/);
       if (time_amount == null || time_unit == null) {
@@ -115,7 +115,7 @@ export const check_bot_dm_response = async (client: Client, msg: Message): Promi
     }
   }
 
-  if (msg.content.trim() === "!my-channels") {
+  if (msg_input === "!my-channels") {
     const user = await UserModel.findOne({author_id});
     if (user == null) {
       await msg.reply("You have no saved channels");
@@ -129,7 +129,7 @@ export const check_bot_dm_response = async (client: Client, msg: Message): Promi
     }
   }
 
-  if (msg.content.trim() === "!commands") {
+  if (msg_input === "!commands") {
     await msg.reply("Here is a list of available commands!");
   } else {
     await msg.reply("Hello <@" + msg.author.id + ">, how can I help you?\nYou can list available commands by typing" +
