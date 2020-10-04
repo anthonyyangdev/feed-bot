@@ -1,13 +1,15 @@
-import Discord, { ReactionManager } from 'discord.js';
+import Discord, { ReactionManager, TextChannel } from 'discord.js';
 import { MessageModel } from './MessageStorage';
 
 import path from 'path';
 import env from 'dotenv';
 import mongoose from "mongoose";
-import {UserModel} from "./collections/UserModel";
+import {User, UserModel} from "./collections/UserModel";
 import {check_bot_dm_response} from "./response/bot_dm";
 import {check_bot_channel_response} from "./response/bot_channel";
 import {formatDmMessage} from "./message/formatDmMessage";
+import {createQueue} from './periodicChecker'
+import PriorityQueue from 'js-priority-queue';
 
 env.config({
   path: path.join(__dirname, '..', '.env')
@@ -36,6 +38,9 @@ async function start(): Promise<void> {
 start();
 
 const client = new Discord.Client();
+
+// create Priority Queue 
+let q : PriorityQueue<[User, number]> = createQueue();
 
 // const messages = await MessageModel.find({});
 //     const message_links = await Promise.all(messages.map(async (v) => msg.channel.messages.fetch(v.message_id)));
@@ -97,6 +102,9 @@ client.on("ready", () => {
   console.log(`Logged in as ${client.user?.tag}!`);
 });
 
+
+
+
 // event checks if message has been sent and reacts accordingly
 client.on("message", async (msg) => {
 
@@ -119,48 +127,72 @@ client.on("message", async (msg) => {
     await msg.reply("Add the message onto the database");
   }
 
-  // at the time of periodic check
-
-  
   if (msg.content.trim() === "!get-reactions") {
-    const d : Date = new Date();
+    console.log('reached function');
+    const author_id = msg.author.id;
+    const user_discord = client.users.fetch(author_id);
+    const user_database = await UserModel.findOne({author_id});
 
-    //hardcoded - scans messages from last hour
+    // CAN CHANGE - hard coded to scan messages in last hour
+    const d = new Date();
     const timestamp_thresh : number = d.getTime() - (1000 * 60 * 60);
-    const messages = await MessageModel.find({ created_timestamp: { $gte: timestamp_thresh } }).exec();
+    const messages = await MessageModel.find({created_timestamp: {$gte: timestamp_thresh}}).exec();
 
+    //NEED TO ADD - only check messages from user specified channels  
+    
+    console.log('starting iteration');
+    let count = 0;
+    // for each new message 
     for (const iteration of messages) {
-      const m  = await msg.channel.messages.fetch(iteration.message_id);
+      console.log('---' + count + '---');
+
+      const channel = await client.channels.fetch(iteration.channel_id);
+      if (channel.type != "text") {
+          console.log('Error finding text channel in sendMsgsWithReactions');
+          continue
+      }
+      const m  = await (channel as TextChannel).messages.cache.get(iteration.message_id);
+      if (m == undefined) {
+          console.log('Error finding message in sendMsgsWithReactions');
+          continue
+      }
       const reactions = m.reactions.cache.array();
 
+      console.log('fetched message and reactions');
+      
       // count number of unique reactions
       let userSet = new Set();
       for (let i = 0; i < reactions.length; i++) {
-        const reaction = reactions[i];
-        const users = reaction.users.cache.array();
-        for (let j = 0; j < users.length; j++) {
-          userSet.add(users[j].id);
-        }
+          const reaction = reactions[i];
+          const users = reaction.users.cache.array();
+          for (let j = 0; j < users.length; j++) {
+              userSet.add(users[j].id);
+          }
       }
       const numUniqueReactors = userSet.size;
       console.log("Message " + iteration.message_id.toString() + " has " + numUniqueReactors.toString() + " reactors")
-
-      const author_id = msg.author.id;
-      const user = await UserModel.findOne({author_id});
-
-      if (!(user == null)) {
-        if (numUniqueReactors >= user.reac_threshold && !iteration.users.includes(author_id)) {
-          // Use anthony's message printing code 
-          msg.author.send(m.url);
-          msg.author.send(m.content);
+      
+      // if number of unique reactions crosses threshold, and message hasn't been sent to user before, send message to user
+      if (user_database != null && numUniqueReactors >= user_database.reac_threshold && !iteration.users.includes(author_id)) {
+          const message = await formatDmMessage(client, iteration.message_id, iteration.channel_id);
+          console.log('About to send the message');
+          (await user_discord).send(message);
+          //client.users.fetch(author_id).then((user) => {user.send(message)});
           iteration.users.push(author_id);
+      } else {
+        if  (user_database == null) {
+          console.log('null User');
+        } else if (!(numUniqueReactors >= user_database.reac_threshold)) {
+          console.log('Not enough reactions');
+        } else if (iteration.users.includes(author_id)) {
+          console.log('Message has been sent to user before');
         }
       }
     }
   }
 
   await check_bot_dm_response(client, msg);
-  await check_bot_channel_response(msg);
+  await check_bot_channel_response(msg, q);
 
   if (msg.content.startsWith("!get-all-messages")) {
     const messages = await MessageModel.find({});
