@@ -2,7 +2,7 @@ import {Document, Schema} from "mongoose";
 import * as mongoose from "mongoose";
 import {ChannelBody} from "./ChannelBody";
 
-export interface User extends Document {
+export interface UserDoc extends Document {
   author_id: string;
   period: number;
   channels: ChannelBody[];
@@ -23,4 +23,4 @@ const UserSchema = new Schema({
   reac_threshold: Number
 });
 
-export const UserModel = mongoose.model<User>('User', UserSchema, 'users');
+export const UserModel = mongoose.model<UserDoc>('User', UserSchema, 'users');

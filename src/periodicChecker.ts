@@ -1,16 +1,18 @@
-import {Client, TextChannel} from "discord.js";
+import {Client, Message, TextChannel, User} from "discord.js";
 import {MessageModel} from "./collections/MessageStorage";
 import {formatDmMessage} from "./message/formatDmMessage";
-import {User, UserModel} from "./collections/UserModel";
+import {UserDoc, UserModel} from "./collections/UserModel";
 import PriorityQueue from 'js-priority-queue';
 
-const compareUsers = function (a: [User, number], b: [User, number]) { return a[1] - b[1]; };
+const compareUsers = function (a: [UserDoc, number], b: [UserDoc, number]) { return a[1] - b[1]; };
 const q = new PriorityQueue({ comparator: compareUsers });
 
-// adding a new user to priority queue
-export function addToQueue(user: User): void {
-  const d = new Date();
-  const newElement: [User, number] = [user, d.getTime() + user.period];
+/**
+ * Adds a user to the priority queue.
+ * @param user
+ */
+export function addToQueue(user: UserDoc): void {
+  const newElement: [UserDoc, number] = [user, user.next_period];
   q.queue(newElement);
 }
 
@@ -19,60 +21,73 @@ export function checkUserUpdateEachMinute(client: Client): void {
 }
 
 async function checkUserUpdates(client: Client) {
-  if (q.length !== 0) {
-    let user = q.peek();
-    console.log("User is " + user[0].author_id);
-    while (user[1] < new Date().getTime()) {
-      console.log("Updating user");
-      await updateUser(user[0], client);
-      user = await q.peek();
-      console.log("Done updating");
-    }
+  while (q.length > 0 && q.peek()[1] < Date.now()) {
+    const [user, old_period] = q.dequeue();
+    await updateUser(user, old_period, client);
   }
 }
 
-async function updateUser(user: User, client: Client) {
+async function updateUser(user: UserDoc, old_period: number, client: Client) {
   //dequeue and requeue user
-  await console.log("in updateUser");
-  const dequeued_item = q.dequeue();
-  const dequeued_user = dequeued_item[0];
-  const old_period = dequeued_item[1];
-  dequeued_user.next_period = old_period + dequeued_user.period;
-  addToQueue(dequeued_user);
-
+  user.next_period = old_period + user.period;
+  await UserModel.findOneAndUpdate({author_id: user.author_id}, {
+    $set: {
+      next_period: user.next_period
+    }
+  });
+  addToQueue(user);
   // update user with messages that have new reactions
-  await sendMsgsWithReactions(dequeued_user, client);
+  await sendMsgsWithReactions(user, client);
 }
 
 function containsKeywords(content: string, keywords: string[]): boolean {
-  let result = false;
-  keywords.forEach(keyword => {
-    if (content.includes(keyword)) {
-      result = result || true;
-    }
-  });
-  return result;
+  return keywords.some(k => content.includes(k));
 }
 
-// periodic check will call this function to update user's dms with new messages crossing the threshold
-// function assumes that the user was already dequeued, its next period value was updated, and it was re-queued
-async function sendMsgsWithReactions(user: User, client: Client) {
-  await console.log("in sendMSG");
+/**
+ * Sends the content of [msg] to the [user] in a DM.
+ * @param client
+ * @param msg
+ * @param user
+ */
+async function sendMessage(client: Client, msg: Message, user: User) {
+  const message = await formatDmMessage(client, msg.id, msg.channel.id);
+  if (message != null) {
+    await user.send(message);
+  }
+  const message_id = msg.id;
+  await MessageModel.findOneAndUpdate({
+    message_id
+  }, {
+    $addToSet: {
+      users: user.id
+    }
+  });
+}
+
+
+/**
+ * Sends user new relevant messages from the subscribed channels in their DMs.
+ * Relevant messages are popular, mention the user, or include keywords specified by the user.
+ * @param user A user whose next_period value was already updated.
+ * @param client Discord bot client.
+ */
+async function sendMsgsWithReactions(user: UserDoc, client: Client) {
   const author_id = user.author_id;
-  const user_discord = client.users.fetch(author_id);
+  const user_discord = await client.users.fetch(author_id);
   const user_database = await UserModel.findOne({ author_id });
 
-  // CAN CHANGE - hard coded to scan messages in last hour
-  const d = new Date();
-  const timestamp_thresh: number = d.getTime() - (1000 * 60 * 60);
+  // Earliest period where we check messages.
+  // Longer than the notification period in case a message becomes popular.
+  const timestamp_threshold: number = Date.now() - (1000 * 60 * 60 * 24);
 
-  let channelArray: string[] = [];
-  let serverArray: string[] = [];
+  const channelArray: string[] = [];
+  const serverArray: string[] = [];
   if (user_database != null) {
-    channelArray = user_database.channels.map(c => c.channel_id);
-    serverArray = user_database.channels.map(c => c.server_id);
-  } else {
-    console.log('User was null');
+    user_database.channels.forEach(c => {
+      channelArray.push(c.channel_id);
+      serverArray.push(c.server_id);
+    });
   }
 
   const messages = await MessageModel.find(
@@ -84,27 +99,23 @@ async function sendMsgsWithReactions(user: User, client: Client) {
         $in: serverArray
       },
       created_timestamp: {
-        $gte: timestamp_thresh
+        $gte: timestamp_threshold
       }
     });
 
   // for each new message
-  for (const iteration of messages) {
-    const channel = await client.channels.fetch(iteration.channel.channel_id);
-    if (channel.type != "text") {
-      console.log('Error finding text channel in sendMsgsWithReactions');
-      continue;
-    }
+  for (const msg of messages) {
+    if (msg.users.includes(author_id)) continue;
 
-    const m = await (channel as TextChannel).messages.cache.get(iteration.message_id);
-    if (m == undefined) {
-      console.log('Error finding message in sendMsgsWithReactions');
-      continue;
-    }
+    const channel = await client.channels.fetch(msg.channel.channel_id);
+    if (channel.type != "text") continue;
+
+    const m = await (channel as TextChannel).messages.cache.get(msg.message_id);
+    if (m == undefined) continue;
+
     const reactions = m.reactions.cache.array();
-
     // count number of unique reactions
-    const userSet = new Set();
+    const userSet = new Set<string>();
     for (let i = 0; i < reactions.length; i++) {
       const reaction = reactions[i];
       const users = reaction.users.cache.array();
@@ -113,62 +124,22 @@ async function sendMsgsWithReactions(user: User, client: Client) {
       }
     }
     const numUniqueReactors = userSet.size;
-    console.log("Message " + iteration.message_id.toString() + " has " + numUniqueReactors.toString() + " reactors");
 
-    // if message contains a keyword and
-    // if number of unique reactions crosses threshold, and message hasn't been sent to user before, send message to user
-    if (numUniqueReactors >= user.reac_threshold && !iteration.users.includes(author_id) && containsKeywords(m.content, user.keywords)) {
-      const message = await formatDmMessage(client, iteration.message_id, iteration.channel.channel_id);
-      await (await user_discord).send(message);
-      const message_id = iteration.message_id;
-      await MessageModel.findOneAndUpdate({
-        message_id
-      }, {
-          $addToSet: {
-          users: author_id
-        }
-      });
+    // if message contains a keyword and if number of unique reactions crosses threshold,
+    // and message hasn't been sent to user before, send message to user.
+    if (numUniqueReactors >= user.reac_threshold && containsKeywords(m.content, user.keywords)) {
+      await sendMessage(client, m, user_discord);
+    } // Checks if the message mentions the user.
+    else if (m.mentions.users.some(user => user.id === author_id)) {
+      await sendMessage(client, m, user_discord);
     }
-
-    if (m.mentions.users.firstKey() != undefined && !iteration.users.includes(author_id)) {
-      const userKeyArr = m.mentions.users.keyArray();
-      for (const userKey of userKeyArr) {
-        if (m.content.includes("" + userKey) && userKey == author_id) {
-          const message = await formatDmMessage(client, iteration.message_id, iteration.channel.channel_id);
-          await (await user_discord).send(message);
-          const message_id = iteration.message_id;
-          await MessageModel.findOneAndUpdate({
-            message_id
-          }, {
-              $addToSet: {
-                users: author_id
-              }
-          });
-        }
-      }
-    }
-    else if (m.mentions.roles.firstKey() != undefined && m.guild != null && !iteration.users.includes(author_id)) {
+    else if (m.guild != null) {
       const userGuildMem = m.guild.members.cache.get(author_id);
-      if (userGuildMem != undefined) {
-        const roleKeyArr = userGuildMem.roles.cache.keyArray();
-        for (const roleKey in roleKeyArr) {
-          if (m.content.includes("" + roleKey)) {
-            const message = await formatDmMessage(client, iteration.message_id, iteration.channel.channel_id);
-            if (message != null) {
-              await (await user_discord).send(message);
-            }
-            const message_id = iteration.message_id;
-            await MessageModel.findOneAndUpdate({
-              message_id
-            }, {
-                $addToSet: {
-                  users: author_id
-                }
-            });
-          }
-        }
+      if (userGuildMem != undefined && m.mentions.roles.some(r => {
+        return userGuildMem.roles.cache.get(r.id) != null;
+      })) {
+        await sendMessage(client, m, user_discord);
       }
     }
-
   }
 }
