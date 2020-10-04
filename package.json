@@ -22,7 +22,7 @@
     "url": "https://github.com/ayang4114/discord_bot_curator/issues"
   },
   "homepage": "https://github.com/ayang4114/discord_bot_curator#readme",
-  "dependencies": {
+  "devDependencies": {
     "@types/axios": "^0.14.0",
     "@types/chai": "^4.2.12",
     "@types/js-priority-queue": "0.0.5",
@@ -33,7 +33,9 @@
     "@types/tmp": "^0.2.0",
     "@types/word-wrap": "^1.2.1",
     "@typescript-eslint/eslint-plugin": "^4.3.0",
-    "@typescript-eslint/parser": "^4.3.0",
+    "@typescript-eslint/parser": "^4.3.0"
+  },
+  "dependencies": {
     "chai": "^4.2.0",
     "eslint": "^7.10.0",
     "mocha": "^8.1.3",
