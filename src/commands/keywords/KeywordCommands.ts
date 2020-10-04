@@ -13,7 +13,7 @@ export const KeyboardCommands: {
 } = {
   show: {
     command: "!show-keywords",
-    description: "",
+    description: "Show all keywords on the user's profile.",
     async checkAndRun(msg: Message): Promise<void> {
       const msg_input = msg.content.trim();
       const author_id = msg.author.id;

@@ -13,7 +13,8 @@ export const AnalysisCommands: {
       " Options: timeline, engagement, nojson.",
     async checkAndRun(msg: Message): Promise<void> {
       const msg_input = msg.content;
-      await handleAnalytics(msg.guild, msg_input, msg.author);
+      if (msg_input.startsWith(this.command))
+        await handleAnalytics(msg.guild, msg_input, msg.author);
     }
   }
 };
