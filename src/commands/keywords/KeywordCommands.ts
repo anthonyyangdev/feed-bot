@@ -48,6 +48,7 @@ export const KeyboardCommands: {
               keywords: keywords
             }
           });
+          await msg.reply("Keywords have been removed.");
         }
       }
     }
@@ -73,6 +74,7 @@ export const KeyboardCommands: {
               }
             }
           });
+          await msg.reply("Keywords have been added.");
         }
       }
     }

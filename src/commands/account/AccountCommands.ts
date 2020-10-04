@@ -1,7 +1,7 @@
 import {CommandInterface} from "../CommandInterface";
 import {Message} from "discord.js";
 import {UserModel} from "../../collections/UserModel";
-import {addToQueue} from "../../periodicChecker";
+import {addToQueue} from "../../PeriodicChecker";
 
 export const AccountCommands: {
   create: CommandInterface;

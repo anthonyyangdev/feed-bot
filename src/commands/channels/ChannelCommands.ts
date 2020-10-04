@@ -1,6 +1,6 @@
 import {CommandInterface} from "../CommandInterface";
 import {UserModel} from "../../collections/UserModel";
-import {addToQueue} from "../../periodicChecker";
+import {addToQueue} from "../../PeriodicChecker";
 import {Client, Message} from "discord.js";
 
 

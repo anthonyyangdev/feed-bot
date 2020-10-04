@@ -64,6 +64,7 @@ export const PeriodCommands: {
                   next_period: Math.min(Date.now() + amount, user.next_period)
                 }
               });
+              await msg.reply("The new period time has been set");
             }
           }
         }

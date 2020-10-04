@@ -3,12 +3,11 @@ import { MessageModel } from './collections/MessageStorage';
 
 import path from 'path';
 import env from 'dotenv';
-import mongoose, {Model} from "mongoose";
+import mongoose from "mongoose";
 import {UserModel} from "./collections/UserModel";
-import {check_bot_dm_response} from "./response/bot_dm";
-import {check_bot_channel_response} from "./response/bot_channel";
-import {checkUserUpdateEachMinute} from './periodicChecker';
-import {ChannelBody} from "./collections/ChannelBody";
+import {check_bot_dm_response} from "./response/BotDm";
+import {check_bot_channel_response} from "./response/BotChannel";
+import {checkUserUpdateEachMinute} from './PeriodicChecker';
 
 env.config({
   path: path.join(__dirname, '..', '.env')
