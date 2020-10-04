@@ -8,7 +8,7 @@ import {AnalysisCommands} from "../commands/analysis/AnalysisCommands";
  */
 export const check_bot_channel_response = async (msg: Message): Promise<void> => {
   const channel_id = msg.channel.id;
-  if (!channel_id) { return; }
+  if (!channel_id) return;
 
   await AnalysisCommands.create.checkAndRun(msg);
 

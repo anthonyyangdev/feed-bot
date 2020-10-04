@@ -5,6 +5,7 @@ import {ReactionCommands} from "../commands/reaction/ReactionCommands";
 import {ChannelCommands} from "../commands/channels/ChannelCommands";
 import {PeriodCommands} from "../commands/period/PeriodCommands";
 import {HelpCommand} from "../commands/HelpCommand";
+import {AccountCommands} from "../commands/account/AccountCommands";
 
 /**
  * Executes commands that should run only when chatting with the bot in a DM.
@@ -15,9 +16,6 @@ export const check_bot_dm_response = async (client: Client, msg: Message): Promi
 
   if (msg.channel.type !== "dm" || msg.author.bot) return;
 
-  const author_id = msg.author.id;
-  const msg_input = msg.content.trim();
-
   await KeyboardCommands.show.checkAndRun(msg);
   await KeyboardCommands.add.checkAndRun(msg);
   await KeyboardCommands.remove.checkAndRun(msg);
@@ -27,12 +25,11 @@ export const check_bot_dm_response = async (client: Client, msg: Message): Promi
 
   await ChannelCommands.show.checkAndRun(msg, client);
 
-  if (msg_input === "!end-feed") {
-    await UserModel.findOneAndRemove({author_id});
-    await msg.author.send("You've been removed by the system. Goodbye 😢");
-  }
+  await AccountCommands.create.checkAndRun(msg);
+  await AccountCommands.end.checkAndRun(msg);
 
   await PeriodCommands.set.checkAndRun(msg);
+  await PeriodCommands.get.checkAndRun(msg);
 
   await HelpCommand.checkAndRun(msg);
 };

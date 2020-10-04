@@ -3,8 +3,30 @@ import {Message} from "discord.js";
 import {UserModel} from "../../collections/UserModel";
 
 export const PeriodCommands: {
-  set: CommandInterface
+  set: CommandInterface;
+  get: CommandInterface;
 } = {
+  get: {
+    command: "!get-period",
+    description: "Gets the time period in between messages from the bot. Default 1 day.",
+    async checkAndRun(msg: Message): Promise<void> {
+      const msg_input = msg.content.trim();
+      const author_id = msg.author.id;
+      if (msg_input.startsWith(this.command)) {
+        const user = await UserModel.findOne({author_id});
+        if (user == null) {
+          await msg.reply("You have no saved channels");
+        } else {
+          const period = user.period;
+          const days = Math.floor(period / 1000 / 3600 / 24);
+          const dayString = days > 0 ? days + " day" + (days > 1 ? 's' : '') : '';
+          const hours = Math.floor(period / 1000 / 3600);
+          const hourString = hours + " hour" + (hours !== 1 ? 's' : '');
+          await msg.reply(`The time period is set at: ${hourString}, ${dayString}`);
+        }
+      }
+    }
+   },
   set: {
     command: "!set-period",
     description: "Sets the time period that the user receives content from the bot. The [amount] can be any positive" +

@@ -17,7 +17,7 @@ export const ChannelCommands: {
 
       const msg_input = msg.content.trim();
       const author_id = msg.author.id;
-      if (msg_input === "!my-channels") {
+      if (msg_input === this.command) {
         const user = await UserModel.findOne({author_id});
         if (user == null) {
           await msg.reply("You have no saved channels");

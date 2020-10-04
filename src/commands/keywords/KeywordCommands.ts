@@ -22,7 +22,10 @@ export const KeyboardCommands: {
         if (user == null) {
           await msg.reply("You don't have any channels saved");
         } else {
-          await msg.reply("Keywords: " + user.keywords.map(v => "<" + v + ">").join(", "));
+          if (user.keywords.length > 0)
+            await msg.reply("Keywords: " + user.keywords.map(v => "<" + v + ">").join(", "));
+          else
+            await msg.reply("You do not have any keywords added");
         }
       }
     }
