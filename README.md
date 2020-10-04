@@ -1,4 +1,4 @@
-# Discord FeedBuddy
+# Discord feed-bot
 
 ## Description
 This is a Discord bot that helps organizers and community members to engage more with others in their servers. The bot curates the content you want from specified channels in a server. On servers that have added this bot, users can save specific channels under their profile. Then, the bot periodically sends those users content/messages tailored to them. For example: popular messages from those channels, messages that mention the user's name/role, or messages that contain keywords that each user had chosen. Additionally, users may call the bot to generate analytic reports about the engagement in the current server.
