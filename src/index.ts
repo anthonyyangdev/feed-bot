@@ -8,9 +8,8 @@ import {User, UserModel} from "./collections/UserModel";
 import {check_bot_dm_response} from "./response/bot_dm";
 import {check_bot_channel_response} from "./response/bot_channel";
 import {formatDmMessage} from "./message/formatDmMessage";
-import {createQueue, checkUserUpdateEachMinute} from './periodicChecker';
+import {checkUserUpdateEachMinute} from './periodicChecker';
 import PriorityQueue from 'js-priority-queue';
-import {ChannelBody} from './collections/ChannelBody';
 
 env.config({
   path: path.join(__dirname, '..', '.env')
@@ -39,9 +38,6 @@ async function start(): Promise<void> {
 start();
 
 const client = new Discord.Client();
-
-// create Priority Queue
-const q: PriorityQueue<[User, number]> = createQueue();
 
 // const messages = await MessageModel.find({});
 //     const message_links = await Promise.all(messages.map(async (v) => msg.channel.messages.fetch(v.message_id)));
@@ -100,7 +96,7 @@ function containsKeywords(content: string, keywords: string[]): boolean {
 
 client.on("ready", () => {
   console.log(`Logged in as ${client.user?.tag}!`);
-  checkUserUpdateEachMinute(q, client);
+  checkUserUpdateEachMinute(client);
 });
 
 
@@ -255,9 +251,8 @@ client.on("message", async (msg) => {
   //   }
   // }
 
-  
   await check_bot_dm_response(client, msg);
-  await check_bot_channel_response(msg, q);
+  await check_bot_channel_response(msg);
 
   if (msg.content.startsWith("!get-all-messages")) {
     const messages = await MessageModel.find({});

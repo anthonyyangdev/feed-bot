@@ -1,6 +1,6 @@
 import {describe, it} from 'mocha';
 import {expect} from 'chai';
-import {parseKeywords} from "../src/keywords/parseKeywords";
+import {parseKeywords} from "../src/commands/keywords/parseKeywords";
 
 describe('Test suite for parseKeywords', function () {
 

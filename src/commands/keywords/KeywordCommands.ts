@@ -1,7 +1,7 @@
 import {CommandInterface} from "../CommandInterface";
 import {Message} from "discord.js";
 import {parseKeywords} from "./parseKeywords";
-import {UserModel} from "../collections/UserModel";
+import {UserModel} from "../../collections/UserModel";
 
 /**
  * Contains commands related to keywords.

@@ -1,25 +1,20 @@
-import { Message, Client, TextChannel } from "discord.js";
+import { Client, TextChannel } from "discord.js";
 import { MessageModel } from "./MessageStorage";
 import { formatDmMessage } from "./message/formatDmMessage";
 import { User, UserModel } from "./collections/UserModel";
 import PriorityQueue from 'js-priority-queue';
-import { ChannelBody } from './collections/ChannelBody'
 
-// creating priority queue
-export function createQueue(): PriorityQueue<[User, number]> {
-  const compareUsers = function (a: [User, number], b: [User, number]) { return a[1] - b[1]; };
-  let q = new PriorityQueue({ comparator: compareUsers });
-  return q;
-}
+const compareUsers = function (a: [User, number], b: [User, number]) { return a[1] - b[1]; };
+const q = new PriorityQueue({ comparator: compareUsers });
 
 // adding a new user to priority queue
-export function addToQueue(q: PriorityQueue<[User, number]>, user: User) {
+export function addToQueue(user: User): void {
   const d = new Date();
   const newElement: [User, number] = [user, d.getTime() + user.period];
   q.queue(newElement);
-};
+}
 
-export function checkUserUpdateEachMinute(q: PriorityQueue<[User, number]>, client: Client) {
+export function checkUserUpdateEachMinute(client: Client): void {
   setInterval(() => checkUserUpdates(q, client), 1000);
 }
 
@@ -41,12 +36,12 @@ async function checkUserUpdates(q: PriorityQueue<[User, number]>, client: Client
 async function updateUser(q: PriorityQueue<[User, number]>, user: User, client: Client) {
   //dequeue and requeue user
   await console.log("in updateUser");
-  let dequeued_item = q.dequeue();
-  let dequeued_user = dequeued_item[0];
+  const dequeued_item = q.dequeue();
+  const dequeued_user = dequeued_item[0];
   const old_period = dequeued_item[1];
   const new_number = old_period + dequeued_user.period;
   dequeued_user.next_period = new_number;
-  addToQueue(q, dequeued_user);
+  addToQueue(dequeued_user);
 
   // update user with messages that have new reactions
   sendMsgsWithReactions(dequeued_user, client);
@@ -101,18 +96,18 @@ async function sendMsgsWithReactions(user: User, client: Client) {
     const channel = await client.channels.fetch(iteration.channel.channel_id);
     if (channel.type != "text") {
       console.log('Error finding text channel in sendMsgsWithReactions');
-      continue
+      continue;
     }
 
     const m = await (channel as TextChannel).messages.cache.get(iteration.message_id);
     if (m == undefined) {
       console.log('Error finding message in sendMsgsWithReactions');
-      continue
+      continue;
     }
     const reactions = m.reactions.cache.array();
 
     // count number of unique reactions
-    let userSet = new Set();
+    const userSet = new Set();
     for (let i = 0; i < reactions.length; i++) {
       const reaction = reactions[i];
       const users = reaction.users.cache.array();
@@ -121,7 +116,7 @@ async function sendMsgsWithReactions(user: User, client: Client) {
       }
     }
     const numUniqueReactors = userSet.size;
-    console.log("Message " + iteration.message_id.toString() + " has " + numUniqueReactors.toString() + " reactors")
+    console.log("Message " + iteration.message_id.toString() + " has " + numUniqueReactors.toString() + " reactors");
 
     // if message contains a keyword and
     // if number of unique reactions crosses threshold, and message hasn't been sent to user before, send message to user

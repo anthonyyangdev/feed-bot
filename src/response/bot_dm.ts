@@ -1,6 +1,8 @@
 import {Message, Client} from "discord.js";
 import {UserModel} from "../collections/UserModel";
-import {KeyboardCommands} from "../keywords/KeywordCommands";
+import {KeyboardCommands} from "../commands/keywords/KeywordCommands";
+import {ReactionCommands} from "../commands/reaction/ReactionCommands";
+import {ChannelCommands} from "../commands/channels/ChannelCommands";
 
 /**
  * Executes commands that should run only when chatting with the bot in a DM.
@@ -18,24 +20,10 @@ export const check_bot_dm_response = async (client: Client, msg: Message): Promi
   await KeyboardCommands.add.checkAndRun(msg);
   await KeyboardCommands.remove.checkAndRun(msg);
 
-  if (msg_input.startsWith("!set-reaction-threshold")) {
-    const tokenized = msg_input.split(" ");
-    const time = parseInt(tokenized[1]);
-    if (!isNaN(time)) {
-      const user = await UserModel.findOne({author_id});
-      if (user != null) {
-        await UserModel.findOneAndUpdate({author_id}, {
-          $set: {
-            reac_threshold: time,
-          }
-        });
-      } else {
-        await msg.reply("Could not find your user in database");
-      }
-    } else {
-      await msg.reply("Please include valid integer after command");
-    }
-  }
+  await ReactionCommands.setThreshold.checkAndRun(msg);
+
+  await ChannelCommands.show.checkAndRun(msg, client);
+
   if (msg_input === "!end-feed") {
     await UserModel.findOneAndRemove({author_id});
     await msg.author.send("You've been removed by the system. Goodbye 😢");
@@ -74,19 +62,6 @@ export const check_bot_dm_response = async (client: Client, msg: Message): Promi
     }
   }
 
-  if (msg_input === "!my-channels") {
-    const user = await UserModel.findOne({author_id});
-    if (user == null) {
-      await msg.reply("You have no saved channels");
-    } else {
-      await msg.reply("Your saved channels are: ");
-      for (const c of user.channels) {
-        const channel_data = await client.channels.fetch(c.channel_id);
-        const guild_data = c.server_id ? await client.guilds.fetch(c.server_id) : "None";
-        await msg.reply(`Server: ${guild_data.toString()}, Channel: ${channel_data.toString()}`);
-      }
-    }
-  }
 
   if (msg_input === "!commands") {
     await msg.reply("Here is a list of available commands!");
