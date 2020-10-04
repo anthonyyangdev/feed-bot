@@ -49,11 +49,10 @@ export const check_bot_channel_response = async (msg: Message, q : PriorityQueue
       await doc.save();
       addToQueue(q, doc);
     } else {
-      await UserModel.findOneAndUpdate({author_id}, {
-        $addToSet: {
-          channels: { channel_id, server_id }
-        }
-      });
+      await UserModel.findOneAndUpdate( 
+        { author_id, 'channels.channel_id': { '$ne': channel_id } }, 
+        { '$addToSet': { 'channels': { channel_id, server_id } } }
+      )
     }
     await msg.reply("Saved this channel under your name.");
   }

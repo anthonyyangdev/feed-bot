@@ -125,19 +125,6 @@ async function sendMsgsWithReactions(user: User, client: Client) {
 
     // if message contains a keyword and
     // if number of unique reactions crosses threshold, and message hasn't been sent to user before, send message to user
-<<<<<<< HEAD
-    if (numUniqueReactors >= user.reac_threshold && !iteration.users.includes(author_id)) {
-        const message = await formatDmMessage(client, iteration.message_id, iteration.channel.channel_id);
-        (await user_discord).send(message);
-        const message_id = iteration.message_id;
-        await MessageModel.findOneAndUpdate({
-            message_id
-          }, {
-            $addToSet: {
-              users: author_id
-            }
-          });
-=======
     if (numUniqueReactors >= user.reac_threshold && !iteration.users.includes(author_id) && containsKeywords(m.content, user.keywords)) {
       const message = await formatDmMessage(client, iteration.message_id, iteration.channel.channel_id);
       (await user_discord).send(message);
@@ -167,7 +154,6 @@ async function sendMsgsWithReactions(user: User, client: Client) {
           });
         }
       }
->>>>>>> 2820a386b8c1ccb276910d27ee789064cba3c071
     }
     else if (m.mentions.roles.firstKey() != undefined && m.guild != null && !iteration.users.includes(author_id)) {
       const userGuildMem = m.guild.members.cache.get(author_id);
