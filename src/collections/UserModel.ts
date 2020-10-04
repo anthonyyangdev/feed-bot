@@ -2,7 +2,7 @@ import {Document, Schema} from "mongoose";
 import * as mongoose from "mongoose";
 import {ChannelBody} from "./ChannelBody";
 
-interface User extends Document {
+export interface User extends Document {
   author_id: string;
   period: number;
   channels: ChannelBody[];
