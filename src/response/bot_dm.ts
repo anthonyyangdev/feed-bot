@@ -1,5 +1,6 @@
 import {Message, Client} from "discord.js";
 import {UserModel} from "../collections/UserModel";
+import {parseKeywords} from "../keywords/parseKeywords";
 
 /**
  * Executes commands that should run only when chatting with the bot in a DM.
@@ -17,10 +18,7 @@ export const check_bot_dm_response = async (client: Client, msg: Message): Promi
      Regex found from here:
      https://stackoverflow.com/questions/366202/regex-for-splitting-a-string-using-space-when-not-surrounded-by-single-or-double
      */
-    const keywords = msg_input
-      .substring("!add-keywords".length + 1)
-      .match(/[^\s"']+|"([^"]*)"|'([^']*)'/g)
-      ?.map(s => s.startsWith('"') && s.endsWith('"') ? s.substring(1, s.length - 1) : s);
+    const keywords = parseKeywords(msg_input, "!add-keywords");
     const user = await UserModel.findOne({author_id});
     if (user == null) {
       await msg.reply("You don't have any channels saved");
@@ -44,7 +42,7 @@ export const check_bot_dm_response = async (client: Client, msg: Message): Promi
     }
   }
   if (msg_input.startsWith("!remove-keywords")) {
-    const keywords = msg_input.substring("!add-keywords".length + 1).split(' ');
+    const keywords = parseKeywords(msg_input, "!remove-keywords");
     const user = await UserModel.findOne({author_id});
     if (user == null) {
       await msg.reply("You don't have any channels saved");
@@ -56,8 +54,6 @@ export const check_bot_dm_response = async (client: Client, msg: Message): Promi
       });
     }
   }
-
-  console.log("almost there");
 
   if (msg_input.startsWith("!set-reaction-threshold")) {
     const tokenized = msg_input.split(" ");
