@@ -14,12 +14,19 @@ export type UserAnalytics = {
   }[];
 };
 
+export type PostData = {
+  message_id: string;
+  author_id: string;
+  timestamp: number;
+};
+
 export type ChannelAnalytics = {
   channel_type: string;
   channel_id: string;
   channel_name: string;
   created_date: number;
   users: UserAnalytics[];
+  posts: PostData[];
   common_words: [string, number][];
   conversation_starters: [string, number][];
 };
@@ -45,12 +52,18 @@ export function collectTextChannelAnalytics(
   });
 
   const word_frequency: Record<string, number> = {};
+  const posts_in_channel: PostData[] = [];
   (channel as TextChannel).messages.cache.forEach(m => {
     if (m.author.bot) return;
 
     const post_user = users_on_channel[m.author.id];
     if (post_user != null) {
       post_user.activeness += 1;
+      posts_in_channel.push({
+        author_id: post_user.id,
+        message_id: m.id,
+        timestamp: m.createdTimestamp
+      });
     }
     const extraction_result: string[] = keyword_extractor.extract(m.content, {
       language:"english",
@@ -82,6 +95,7 @@ export function collectTextChannelAnalytics(
 
   const user_data_array = Object.keys(users_on_channel).map(k => users_on_channel[k]);
   return {
+    posts: posts_in_channel,
     channel_type: "text",
     channel_id: channel.id,
     channel_name: channel.name,
