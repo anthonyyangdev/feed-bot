@@ -26,7 +26,7 @@ export const ReactionCommands: {
     async checkAndRun(msg: Message): Promise<void> {
       const msg_input = msg.content.trim();
       const author_id = msg.author.id;
-      if (msg_input.startsWith("!set-reaction-threshold")) {
+      if (msg_input.startsWith(this.command)) {
         const tokenized = msg_input.split(" ");
         const time = parseInt(tokenized[1]);
         if (!isNaN(time)) {

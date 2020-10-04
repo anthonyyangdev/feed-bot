@@ -5,6 +5,7 @@ import {AnalysisCommands} from "./analysis/AnalysisCommands";
 import {KeyboardCommands} from "./keywords/KeywordCommands";
 import {PeriodCommands} from "./period/PeriodCommands";
 import {ReactionCommands} from "./reaction/ReactionCommands";
+import {AccountCommands} from "./account/AccountCommands";
 
 
 const AvailableCommands: CommandInterface[] = [
@@ -12,7 +13,8 @@ const AvailableCommands: CommandInterface[] = [
   ...Object.values(AnalysisCommands),
   ...Object.values(KeyboardCommands),
   ...Object.values(PeriodCommands),
-  ...Object.values(ReactionCommands)
+  ...Object.values(ReactionCommands),
+  ...Object.values(AccountCommands)
 ];
 
 export const HelpCommand: CommandInterface = {

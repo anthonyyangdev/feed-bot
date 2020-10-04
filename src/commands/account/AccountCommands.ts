@@ -14,7 +14,7 @@ export const AccountCommands: {
     async checkAndRun(msg: Message): Promise<void> {
       const msg_input = msg.content.trim();
       const author_id = msg.author.id;
-      if (msg_input === "!end-feed") {
+      if (msg_input === this.command) {
         await UserModel.findOneAndRemove({author_id});
         await msg.author.send("You've been removed by the system. Goodbye 😢");
       }

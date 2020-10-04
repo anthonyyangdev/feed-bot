@@ -15,7 +15,7 @@ export const PeriodCommands: {
       if (msg_input.startsWith(this.command)) {
         const user = await UserModel.findOne({author_id});
         if (user == null) {
-          await msg.reply("You have no saved channels");
+          await msg.reply("You have not created an account with me.");
         } else {
           const period = user.period;
           const days = Math.floor(period / 1000 / 3600 / 24);
@@ -23,8 +23,10 @@ export const PeriodCommands: {
           const hours = Math.floor(period / 1000 / 3600);
           const hourString = days > 0 ? hours + " hour" + (hours !== 1 ? 's' : ', ') : '';
           const minutes = Math.floor(period / 1000 / 60);
-          const minuteString = minutes + " minute" + (minutes !== 1 ? 's' : '');
-          await msg.reply(`The time period is set at: ${dayString}${hourString}${minuteString}`);
+          const minuteString = minutes > 0 ? minutes + " minute" + (minutes !== 1 ? 's' : ', '): '';
+          const seconds = Math.floor(period / 1000);
+          const secondString = seconds + " second" + (seconds !== 1 ? 's' : '');
+          await msg.reply(`The time period is set at: ${dayString}${hourString}${minuteString}${secondString}`);
         }
       }
     }
