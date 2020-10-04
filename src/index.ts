@@ -8,9 +8,9 @@ import {User, UserModel} from "./collections/UserModel";
 import {check_bot_dm_response} from "./response/bot_dm";
 import {check_bot_channel_response} from "./response/bot_channel";
 import {formatDmMessage} from "./message/formatDmMessage";
-import {createQueue, checkUserUpdateEachMinute} from './periodicChecker'
+import {createQueue, checkUserUpdateEachMinute} from './periodicChecker';
 import PriorityQueue from 'js-priority-queue';
-import {ChannelBody} from './collections/ChannelBody'
+import {ChannelBody} from './collections/ChannelBody';
 
 env.config({
   path: path.join(__dirname, '..', '.env')
@@ -40,8 +40,8 @@ start();
 
 const client = new Discord.Client();
 
-// create Priority Queue 
-let q: PriorityQueue<[User, number]> = createQueue();
+// create Priority Queue
+const q: PriorityQueue<[User, number]> = createQueue();
 
 // const messages = await MessageModel.find({});
 //     const message_links = await Promise.all(messages.map(async (v) => msg.channel.messages.fetch(v.message_id)));
@@ -137,33 +137,44 @@ client.on("message", async (msg) => {
 
     const author_id = msg.author.id;
     const user_database = await UserModel.findOne({author_id});
-  
-    const d = new Date();
-    const timestamp_thresh : number = d.getTime() - (1000 * 60 * 60);
-    let channelArray : ChannelBody[] = [];
+
+    const timestamp_thresh : number = Date.now() - (1000 * 60 * 60);
+    let channelArray : string[] = [];
+    let serverArray: string[] = [];
     if (user_database != null) {
-      channelArray = user_database.channels;
+      channelArray = user_database.channels.map(c => c.channel_id);
+      serverArray = user_database.channels.map(c => c.server_id);
     } else {
       console.log('User was null');
     }
 
     console.log('found channel Array of size' + channelArray.length);
 
-    const messages = await MessageModel.find({channel: {$in: channelArray},created_timestamp: {$gte: timestamp_thresh}}).exec();
+    const messages = await MessageModel.find(
+      {
+        'channel.channel_id': {
+          $in: channelArray
+        },
+        'channel.server_id': {
+          $in: serverArray
+        },
+        created_timestamp: {
+          $gte: timestamp_thresh
+        }
+      });
 
     console.log('filtered to messages of length' + messages.length);
 
     for (const mess of messages) {
-      
       const channel = await client.channels.fetch(mess.channel.channel_id);
       if (channel.type != "text") {
         console.log('Error finding text channel in sendMsgsWithReactions');
-        continue
+        continue;
       }
       const m  = await (channel as TextChannel).messages.cache.get(mess.message_id);
       if (m == undefined) {
         console.log('Error finding message in sendMsgsWithReactions');
-        continue
+        continue;
       }
       console.log(m.toString());
     }
@@ -184,11 +195,11 @@ client.on("message", async (msg) => {
   //   const timestamp_thresh : number = d.getTime() - (1000 * 60 * 60);
   //   const messages = await MessageModel.find({created_timestamp: {$gte: timestamp_thresh}}).exec();
 
-  //   //NEED TO ADD - only check messages from user specified channels  
-    
+  //   //NEED TO ADD - only check messages from user specified channels
+
   //   console.log('starting iteration');
   //   let count = 0;
-  //   // for each new message 
+  //   // for each new message
   //   for (const iteration of messages) {
   //     console.log('---' + count + '---');
 
@@ -205,7 +216,7 @@ client.on("message", async (msg) => {
   //     const reactions = m.reactions.cache.array();
 
   //     console.log('fetched message and reactions');
-      
+
   //     // count number of unique reactions
   //     const userSet = new Set();
   //     for (let i = 0; i < reactions.length; i++) {
@@ -217,7 +228,7 @@ client.on("message", async (msg) => {
   //     }
   //     const numUniqueReactors = userSet.size;
   //     console.log("Message " + iteration.message_id.toString() + " has " + numUniqueReactors.toString() + " reactors")
-      
+
   //     // if number of unique reactions crosses threshold, and message hasn't been sent to user before, send message to user
   //     if (user_database != null && numUniqueReactors >= user_database.reac_threshold && !iteration.users.includes(author_id)) {
   //         const message = await formatDmMessage(client, iteration.message_id, iteration.channel_id);
@@ -260,9 +271,9 @@ client.on("message", async (msg) => {
         const userKeyArr = contents.mentions.users.keyArray();
         userKeyArr.forEach(userKey => {
           if (contents.content.includes("" + userKey) && userKey == msg.author.id) {
-            msg.reply(contents.content)
+            msg.reply(contents.content);
           }
-        })
+        });
       }
       else if (contents.mentions.roles.firstKey() != undefined && msg.member != null) {
         const roleKeyArr = msg.member.roles.cache.keyArray();
