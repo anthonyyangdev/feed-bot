@@ -17,8 +17,12 @@ These commands can only be run when in a DM with the bot. They include most of t
 | !remove-keywords [...keywords] | Removes keywords from the user's profile. Multi-word phrases can be removed by using double-quotation marks.                                            |
 | !show-keywords                 | Show all keywords on the user's profile.                                                                                                              |
 | !set-period [amount] [unit]    | Sets the time period that the user receives content from the bot. The [amount] can be any positive integer. The [unit] can be: hour, hours, day, days |
-| !show-period                   | Shows the current time period that the user receives content from the bot.                                                                              |
-| !end-feed                      | Drops the all of the user's profile information from the bot.                                                                                            |
+| !get-period                    | Shows the current time period that the user receives content from the bot.                                                                              |
+| !set-reaction-threshold        | Set the minimum number of unique users who react to a post for it to be relevant.
+| !get-reaction-threshold        | Get the minimum number of unique users who react to a post for it to be relevant.
+| !create                        | Create's an account with the bot.
+| !end                           | Drops the all of the user's profile information from the bot.                                                                                            |
+| !my-channels                   | Shows all channels added by the user.                                                                                                                                                                                                            |
 
 ### Channel-Only
 
@@ -29,7 +33,6 @@ These commands can only be run when in a channel with the bot.
 |-----------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | !save-channel               | Adds the current channel where this command was executed onto the user's profile. The bot will use this channel when curating content for the user.                                                                                              |
 | !remove-channel             | Removes the current channel where this command was executed from the user's profile.                                                                                                                                                             |
-| !my-channels                | Shows all channels added by the user.                                                                                                                                                                                                            |
 | !get-analytics [...options] | The bot will generate an analysis report about the server where the command was run. The report will be sent to the user's DM with the bot. Options are added to generate more tailored reports. Accepted Options: timeline, engagement, nojson. |
 
 
