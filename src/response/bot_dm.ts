@@ -1,5 +1,4 @@
 import {Message, Client} from "discord.js";
-import {UserModel} from "../collections/UserModel";
 import {KeyboardCommands} from "../commands/keywords/KeywordCommands";
 import {ReactionCommands} from "../commands/reaction/ReactionCommands";
 import {ChannelCommands} from "../commands/channels/ChannelCommands";

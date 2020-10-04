@@ -28,7 +28,7 @@ export const AccountCommands: {
         const author_id = msg.author.id;
         const channel_id = msg.channel.id;
         const server_id = msg.guild?.id ?? "Unknown";
-        const user = UserModel.findOne({author_id});
+        const user = await UserModel.findOne({author_id});
         if (user != null)
           await msg.reply("You've created an account with me already.");
         else {
@@ -42,6 +42,7 @@ export const AccountCommands: {
           });
           await doc.save();
           addToQueue(doc);
+          await msg.reply("Account created! Welcome aboard <@" + author_id + ">");
         }
       }
     }

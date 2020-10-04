@@ -19,10 +19,12 @@ export const PeriodCommands: {
         } else {
           const period = user.period;
           const days = Math.floor(period / 1000 / 3600 / 24);
-          const dayString = days > 0 ? days + " day" + (days > 1 ? 's' : '') : '';
+          const dayString = days > 0 ? days + " day" + (days > 1 ? 's' : ', ') : '';
           const hours = Math.floor(period / 1000 / 3600);
-          const hourString = hours + " hour" + (hours !== 1 ? 's' : '');
-          await msg.reply(`The time period is set at: ${hourString}, ${dayString}`);
+          const hourString = days > 0 ? hours + " hour" + (hours !== 1 ? 's' : ', ') : '';
+          const minutes = Math.floor(period / 1000 / 60);
+          const minuteString = minutes + " minute" + (minutes !== 1 ? 's' : '');
+          await msg.reply(`The time period is set at: ${dayString}${hourString}${minuteString}`);
         }
       }
     }

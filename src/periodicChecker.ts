@@ -1,7 +1,7 @@
-import { Client, TextChannel } from "discord.js";
-import { MessageModel } from "./collections/MessageStorage";
-import { formatDmMessage } from "./message/formatDmMessage";
-import { User, UserModel } from "./collections/UserModel";
+import {Client, TextChannel} from "discord.js";
+import {MessageModel} from "./collections/MessageStorage";
+import {formatDmMessage} from "./message/formatDmMessage";
+import {User, UserModel} from "./collections/UserModel";
 import PriorityQueue from 'js-priority-queue';
 
 const compareUsers = function (a: [User, number], b: [User, number]) { return a[1] - b[1]; };
@@ -15,36 +15,33 @@ export function addToQueue(user: User): void {
 }
 
 export function checkUserUpdateEachMinute(client: Client): void {
-  setInterval(() => checkUserUpdates(q, client), 1000);
+  setInterval(() => checkUserUpdates(client), 1000);
 }
 
-async function checkUserUpdates(q: PriorityQueue<[User, number]>, client: Client) {
-  //   console.log("Starting check...");
-  if (q.length != 0) {
+async function checkUserUpdates(client: Client) {
+  if (q.length !== 0) {
     let user = q.peek();
     console.log("User is " + user[0].author_id);
     while (user[1] < new Date().getTime()) {
       console.log("Updating user");
-      await updateUser(q, user[0], client);
+      await updateUser(user[0], client);
       user = await q.peek();
       console.log("Done updating");
     }
   }
-  //   console.log("Done checking");
 }
 
-async function updateUser(q: PriorityQueue<[User, number]>, user: User, client: Client) {
+async function updateUser(user: User, client: Client) {
   //dequeue and requeue user
   await console.log("in updateUser");
   const dequeued_item = q.dequeue();
   const dequeued_user = dequeued_item[0];
   const old_period = dequeued_item[1];
-  const new_number = old_period + dequeued_user.period;
-  dequeued_user.next_period = new_number;
+  dequeued_user.next_period = old_period + dequeued_user.period;
   addToQueue(dequeued_user);
 
   // update user with messages that have new reactions
-  sendMsgsWithReactions(dequeued_user, client);
+  await sendMsgsWithReactions(dequeued_user, client);
 }
 
 function containsKeywords(content: string, keywords: string[]): boolean {
@@ -122,7 +119,7 @@ async function sendMsgsWithReactions(user: User, client: Client) {
     // if number of unique reactions crosses threshold, and message hasn't been sent to user before, send message to user
     if (numUniqueReactors >= user.reac_threshold && !iteration.users.includes(author_id) && containsKeywords(m.content, user.keywords)) {
       const message = await formatDmMessage(client, iteration.message_id, iteration.channel.channel_id);
-      (await user_discord).send(message);
+      await (await user_discord).send(message);
       const message_id = iteration.message_id;
       await MessageModel.findOneAndUpdate({
         message_id
@@ -138,7 +135,7 @@ async function sendMsgsWithReactions(user: User, client: Client) {
       for (const userKey of userKeyArr) {
         if (m.content.includes("" + userKey) && userKey == author_id) {
           const message = await formatDmMessage(client, iteration.message_id, iteration.channel.channel_id);
-          (await user_discord).send(message);
+          await (await user_discord).send(message);
           const message_id = iteration.message_id;
           await MessageModel.findOneAndUpdate({
             message_id
@@ -158,7 +155,7 @@ async function sendMsgsWithReactions(user: User, client: Client) {
           if (m.content.includes("" + roleKey)) {
             const message = await formatDmMessage(client, iteration.message_id, iteration.channel.channel_id);
             if (message != null) {
-              (await user_discord).send(message);
+              await (await user_discord).send(message);
             }
             const message_id = iteration.message_id;
             await MessageModel.findOneAndUpdate({
