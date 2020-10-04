@@ -1,4 +1,7 @@
 import {Client, TextChannel} from "discord.js";
+import wrap from 'word-wrap';
+
+const block = '=============================================================';
 
 /**
  * Formats a Discord message with id [message_id] found at channel [channel_id].
@@ -19,17 +22,21 @@ export const formatDmMessage = async (
     const author = message.author;
     const guild = message.guild;
     const content = message.content;
+    const reactions = message.reactions.cache.array();
 
-    return `
+    const response = `
     Message: ${message.url}
     By: ${author.username}, ${author.toString()}
     ${guild ? `From Server: ${guild.name}, ${guild.id}` : 'Server unknown'}
     Content:
-=============================================================
-    ${content}
-=============================================================
-    Reactions: ${message.reactions.toString()}
-    `;
+${block}
+${content}
+${block}
+    ${reactions.length > 0 ?
+      `${reactions.map(r => r.emoji.toString() + " " + r.count).join('   ')}`
+      : ''
+    }`;
+    return wrap(response, {width: block.length});
   }
   return null;
 };
