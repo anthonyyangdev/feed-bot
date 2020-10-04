@@ -3,11 +3,12 @@ import { MessageModel } from './collections/MessageStorage';
 
 import path from 'path';
 import env from 'dotenv';
-import mongoose from "mongoose";
+import mongoose, {Model} from "mongoose";
 import {UserModel} from "./collections/UserModel";
 import {check_bot_dm_response} from "./response/bot_dm";
 import {check_bot_channel_response} from "./response/bot_channel";
 import {checkUserUpdateEachMinute} from './periodicChecker';
+import {ChannelBody} from "./collections/ChannelBody";
 
 env.config({
   path: path.join(__dirname, '..', '.env')
@@ -41,6 +42,18 @@ client.on("ready", () => {
 // event checks if message has been sent and reacts accordingly
 client.on("message", async (msg) => {
   if (msg.author.bot) return;
+
+  const doc = await MessageModel.create({
+    author: msg.author.id,
+    message_id: msg.id,
+    channel: {
+      server_id: msg.guild?.id ?? "",
+      channel_id: msg.channel.id
+    },
+    created_timestamp: msg.createdTimestamp,
+    users: [msg.author.id],
+  });
+  await doc.save();
 
   await check_bot_dm_response(client, msg);
   await check_bot_channel_response(msg);

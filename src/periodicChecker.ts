@@ -30,14 +30,16 @@ async function checkUserUpdates(client: Client) {
 async function updateUser(user: UserDoc, old_period: number, client: Client) {
   //dequeue and requeue user
   user.next_period = old_period + user.period;
-  await UserModel.findOneAndUpdate({author_id: user.author_id}, {
+  const updatedUser = await UserModel.findOneAndUpdate({author_id: user.author_id}, {
     $set: {
       next_period: user.next_period
     }
   });
-  addToQueue(user);
-  // update user with messages that have new reactions
-  await sendMsgsWithReactions(user, client);
+  if (updatedUser) {
+    addToQueue(updatedUser);
+    // update user with messages that have new reactions
+    await sendMsgsWithReactions(updatedUser, client);
+  }
 }
 
 function containsKeywords(content: string, keywords: string[]): boolean {
@@ -127,7 +129,7 @@ async function sendMsgsWithReactions(user: UserDoc, client: Client) {
 
     // if message contains a keyword and if number of unique reactions crosses threshold,
     // and message hasn't been sent to user before, send message to user.
-    if (numUniqueReactors >= user.reac_threshold && containsKeywords(m.content, user.keywords)) {
+    if (numUniqueReactors >= user.reac_threshold || containsKeywords(m.content, user.keywords)) {
       await sendMessage(client, m, user_discord);
     } // Checks if the message mentions the user.
     else if (m.mentions.users.some(user => user.id === author_id)) {
