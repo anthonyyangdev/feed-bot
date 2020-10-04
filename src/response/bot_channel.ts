@@ -13,38 +13,34 @@ export const check_bot_channel_response = async (msg: Message, q : PriorityQueue
   const channel_id = msg.channel.id;
   if (!channel_id) { return; }
 
+  const msg_input = msg.content.trim();
   const author_id = msg.author.id;
+  const server_id = msg.guild?.id ?? "Unknown";
 
-  if (msg.content.startsWith("!get-analytics")) {
-    await handleAnalytics(msg);
+  if (msg_input.startsWith("!get-analytics")) {
+    await handleAnalytics(msg.guild, msg_input, msg.author);
   }
 
-  if (msg.content.trim() === "!remove-channel") {
+  if (msg_input === "!remove-channel") {
     const user = await UserModel.findOne({author_id});
     if (user == null) {
       await msg.reply("You do not have any saved channels");
     } else {
       await UserModel.findOneAndUpdate({author_id}, {
         $pull: {
-          channels: {
-            channel_id,
-            server_id: msg.guild?.id
-          }
+          channels: { channel_id, server_id }
         }
       });
       await msg.reply("This channel has been removed your saved list of channels");
     }
   }
 
-  if (msg.content.trim() === "!save-channel") {
+  if (msg_input === "!save-channel") {
     const user = await UserModel.findOne({author_id});
     if (user == null) {
       const doc = await UserModel.create({
         author_id,
-        channels: [{
-          channel_id,
-          server_id: msg.guild?.id ?? ""
-        }],
+        channels: [{channel_id, server_id}],
         period: 86400000,
         next_period: Date.now() + 86400000,
         keywords: [],
@@ -53,14 +49,9 @@ export const check_bot_channel_response = async (msg: Message, q : PriorityQueue
       await doc.save();
       addToQueue(q, doc);
     } else {
-      await UserModel.findOneAndUpdate({
-        author_id
-      }, {
+      await UserModel.findOneAndUpdate({author_id}, {
         $addToSet: {
-          channels: {
-            channel_id,
-            server_id: msg.guild?.id ?? ""
-          }
+          channels: { channel_id, server_id }
         }
       });
     }

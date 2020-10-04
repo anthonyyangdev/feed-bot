@@ -2,7 +2,7 @@ import {ChannelAnalytics, collectTextChannelAnalytics, UserAnalytics} from "./an
 import {arrayMax} from "../util/arrayTools";
 import tmp from "tmp";
 import fs from "fs";
-import {Message} from "discord.js";
+import {Guild, Message, User} from "discord.js";
 import {createPieChart, createTimeGraph} from "./graphs";
 
 const getUserActivities = (analytics: ChannelAnalytics[]): {
@@ -111,16 +111,18 @@ const createJsonDump = async (
 /**
  * Handles the message response where the user wants to get analytics data about a server.
  * The data will be DM'd to the user as a JSON file.
- * @param msg
+ * @param guild
+ * @param msg_input
+ * @param author
  */
-export const handleAnalytics = async (msg: Message): Promise<void> => {
-  const server_name = msg.guild?.name ?? "Server Unknown";
-  const channels = msg.guild?.channels.cache;
-  const wants = msg.content.match(/\b(timeline|engagement|nojson|help)\b/g);
+export const handleAnalytics = async (guild: Guild | null, msg_input: string, author: User): Promise<void> => {
+  const server_name = guild?.name ?? "Server Unknown";
+  const channels = guild?.channels.cache;
+  const wants = msg_input.match(/\b(timeline|engagement|nojson|help)\b/g);
 
   if (wants && wants.includes("help")) {
-    await msg.author.send(`
-      Hi ${msg.author.username}!
+    await author.send(`
+      Hi ${author.username}!
 
       To get analytics, run \`!get-analytics\` on a channel where I'm added.
       You can also get additional analytics by adding one or more keywords to the command.
@@ -135,7 +137,7 @@ export const handleAnalytics = async (msg: Message): Promise<void> => {
   if (channels != null) {
     const analytics: ChannelAnalytics[] = [];
     for (const channel of channels) {
-      const data = collectTextChannelAnalytics(msg.author, channel[0], channel[1]);
+      const data = collectTextChannelAnalytics(author, channel[0], channel[1]);
       if (data) analytics.push(data);
     }
 
@@ -149,8 +151,8 @@ export const handleAnalytics = async (msg: Message): Promise<void> => {
       files_to_send.push(await getTimeGraph(server_name, analytics));
 
     if (files_to_send.length === 0) {
-      await msg.author.send(`
-      Hi ${msg.author.username}!
+      await author.send(`
+      Hi ${author.username}!
       
       To get analytics, run \`!get-analytics\` on a channel where I'm added.
       You can also get additional analytics by adding one or more keywords to the command.
@@ -161,10 +163,10 @@ export const handleAnalytics = async (msg: Message): Promise<void> => {
       The available keywords are: \`engagement\`, \`timeline\`, and \`nojson\` 
       `);
     } else {
-      await msg.author.send(`
-      Hi ${msg.author.username}!
+      await author.send(`
+      Hi ${author.username}!
       
-      Here's some information about the server: ${msg.guild?.name}:
+      Here's some information about the server: ${guild?.name}:
       `, {
         files: files_to_send
       });
