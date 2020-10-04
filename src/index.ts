@@ -41,7 +41,7 @@ start();
 const client = new Discord.Client();
 
 // create Priority Queue 
-let q : PriorityQueue<[User, number]> = createQueue();
+let q: PriorityQueue<[User, number]> = createQueue();
 
 // const messages = await MessageModel.find({});
 //     const message_links = await Promise.all(messages.map(async (v) => msg.channel.messages.fetch(v.message_id)));
@@ -100,7 +100,7 @@ function containsKeywords(content: string, keywords: string[]): boolean {
 
 client.on("ready", () => {
   console.log(`Logged in as ${client.user?.tag}!`);
-  // checkUserUpdateEachMinute();
+  checkUserUpdateEachMinute(q, client);
 });
 
 
@@ -112,7 +112,7 @@ client.on("message", async (msg) => {
   const channel_id = msg.channel.id;
   const author_id = msg.author.id;
 
-  if (author_id !== process.env.TEST_USER)
+  if (author_id !== process.env.TEST_USER || msg.author.bot)
     return;
 
   if (!msg.author.bot && !msg.content.startsWith("!get-all-messages")) {
@@ -157,13 +157,13 @@ client.on("message", async (msg) => {
       
       const channel = await client.channels.fetch(mess.channel.channel_id);
       if (channel.type != "text") {
-          console.log('Error finding text channel in sendMsgsWithReactions');
-          continue
+        console.log('Error finding text channel in sendMsgsWithReactions');
+        continue
       }
       const m  = await (channel as TextChannel).messages.cache.get(mess.message_id);
       if (m == undefined) {
-          console.log('Error finding message in sendMsgsWithReactions');
-          continue
+        console.log('Error finding message in sendMsgsWithReactions');
+        continue
       }
       console.log(m.toString());
     }
@@ -249,6 +249,29 @@ client.on("message", async (msg) => {
     message_contents.forEach(content => {
       if (content != null)
         msg.reply(content);
+    });
+  }
+
+  if (msg.content.trim() === "!get-mention-messages") {
+    const messages = await MessageModel.find({});
+    const message_contents = await Promise.all(messages.map(async (v) => msg.channel.messages.fetch(v.message_id)));
+    message_contents.forEach(contents => {
+      if (contents.mentions.users.firstKey() != undefined) {
+        const userKeyArr = contents.mentions.users.keyArray();
+        userKeyArr.forEach(userKey => {
+          if (contents.content.includes("" + userKey) && userKey == msg.author.id) {
+            msg.reply(contents.content)
+          }
+        })
+      }
+      else if (contents.mentions.roles.firstKey() != undefined && msg.member != null) {
+        const roleKeyArr = msg.member.roles.cache.keyArray();
+        roleKeyArr.forEach(roleKey => {
+          if (contents.content.includes("" + roleKey)) {
+            msg.reply(contents.content);
+          }
+        });
+      }
     });
   }
 

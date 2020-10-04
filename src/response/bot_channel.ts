@@ -1,4 +1,5 @@
 import {Message} from "discord.js";
+import {handleAnalytics} from "../analytics/handleAnalytics";
 import {User, UserModel} from "../collections/UserModel";
 import PriorityQueue from 'js-priority-queue';
 import {addToQueue} from '../periodicChecker';
@@ -6,12 +7,17 @@ import {addToQueue} from '../periodicChecker';
 /**
  * Executes commands that should run only when messaging in some channel in a server.
  * @param msg
+ * @param q
  */
 export const check_bot_channel_response = async (msg: Message, q : PriorityQueue<[User, number]>): Promise<void> => {
   const channel_id = msg.channel.id;
   if (!channel_id) { return; }
 
   const author_id = msg.author.id;
+
+  if (msg.content.startsWith("!get-analytics")) {
+    await handleAnalytics(msg);
+  }
 
   if (msg.content.trim() === "!remove-channel") {
     const user = await UserModel.findOne({author_id});
