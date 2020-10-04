@@ -1,5 +1,5 @@
 import { Client, TextChannel } from "discord.js";
-import { MessageModel } from "./MessageStorage";
+import { MessageModel } from "./collections/MessageStorage";
 import { formatDmMessage } from "./message/formatDmMessage";
 import { User, UserModel } from "./collections/UserModel";
 import PriorityQueue from 'js-priority-queue';

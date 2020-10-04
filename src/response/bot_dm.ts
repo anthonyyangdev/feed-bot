@@ -23,6 +23,7 @@ export const check_bot_dm_response = async (client: Client, msg: Message): Promi
   await KeyboardCommands.remove.checkAndRun(msg);
 
   await ReactionCommands.setThreshold.checkAndRun(msg);
+  await ReactionCommands.getThreshold.checkAndRun(msg);
 
   await ChannelCommands.show.checkAndRun(msg, client);
 

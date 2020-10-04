@@ -2,7 +2,6 @@ import {CommandInterface} from "../CommandInterface";
 import {handleAnalytics} from "../../analytics/handleAnalytics";
 import {Message} from "discord.js";
 
-
 export const AnalysisCommands: {
   create: CommandInterface
 } = {

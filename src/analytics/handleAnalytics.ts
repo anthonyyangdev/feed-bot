@@ -2,7 +2,7 @@ import {ChannelAnalytics, collectTextChannelAnalytics, UserAnalytics} from "./an
 import {arrayMax} from "../util/arrayTools";
 import tmp from "tmp";
 import fs from "fs";
-import {Guild, Message, User} from "discord.js";
+import {Guild, User} from "discord.js";
 import {createPieChart, createTimeGraph} from "./graphs";
 
 const getUserActivities = (analytics: ChannelAnalytics[]): {

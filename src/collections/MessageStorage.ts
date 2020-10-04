@@ -1,6 +1,6 @@
 import {Document, Schema} from "mongoose";
 import * as mongoose from "mongoose";
-import {ChannelBody} from './collections/ChannelBody';
+import {ChannelBody} from './ChannelBody';
 
 interface Message extends Document {
   author: string;
