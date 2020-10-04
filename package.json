@@ -2,10 +2,10 @@
   "name": "discord_bot_curator",
   "version": "1.0.0",
   "description": "A discord bot that curates the content you want from specified channels in a server.",
-  "main": "./dist/src/index.js",
+  "main": "./dist/index.js",
   "scripts": {
     "dev": "nodemon --watch 'src/**/*.ts' --ignore 'test/**/*.test.ts' --exec \"ts-node\" ./src/index.ts",
-    "start": "npm install && npm run build && node dist/src/index.js",
+    "start": "npm install && npm run build && node dist/index.js",
     "build": "tsc -p .",
     "clean": "rm -rf dist/",
     "test": "mocha --full-trace -r ts-node/register --timeout 1000 'test/**/*.test.ts'",
