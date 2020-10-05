@@ -19,9 +19,9 @@ export const PeriodCommands: {
           await msg.reply("You have not created an account with me.");
         } else {
           const {days, hours, minutes, seconds} = parseMilliseconds(user.period);
-          const dayString = days > 0 ? days + " day" + (days > 1 ? 's' : ', ') : '';
-          const hourString = days > 0 ? hours + " hour" + (hours !== 1 ? 's' : ', ') : '';
-          const minuteString = minutes > 0 ? minutes + " minute" + (minutes !== 1 ? 's' : ', '): '';
+          const dayString = days > 0 ? days + " day" + (days > 1 ? 's' : '') + ', ': '';
+          const hourString = hours > 0 ? hours + " hour" + (hours !== 1 ? 's' : '') + ', ': '';
+          const minuteString = minutes > 0 ? minutes + " minute" + (minutes !== 1 ? 's' : '') + ', ': '';
           const secondString = seconds + " second" + (seconds !== 1 ? 's' : '');
           await msg.reply(`The time period is set at: ${dayString}${hourString}${minuteString}${secondString}`);
         }
@@ -53,9 +53,9 @@ export const PeriodCommands: {
             } else {
               switch (unit) {
                 case "hour": case "hours":
-                  amount *= 60 * 3600; break;
+                  amount *= 60 * 60 * 1000; break;
                 case "day": case "days":
-                  amount *= 24 * 60 * 3600; break;
+                  amount *= 24 * 3600 * 1000; break;
               }
               await UserModel.findOneAndUpdate({author_id}, {
                 $set: {
