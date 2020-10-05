@@ -4,7 +4,6 @@ import { MessageModel } from './collections/MessageStorage';
 import path from 'path';
 import env from 'dotenv';
 import mongoose from "mongoose";
-import {UserModel} from "./collections/UserModel";
 import {check_bot_dm_response} from "./response/BotDm";
 import {check_bot_channel_response} from "./response/BotChannel";
 import {checkUserUpdateEachMinute} from './PeriodicChecker';
