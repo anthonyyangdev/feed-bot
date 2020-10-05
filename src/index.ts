@@ -7,6 +7,7 @@ import mongoose from "mongoose";
 import {check_bot_dm_response} from "./response/BotDm";
 import {check_bot_channel_response} from "./response/BotChannel";
 import {checkUserUpdateEachMinute} from './PeriodicChecker';
+import {HelpCommand} from "./commands/HelpCommand";
 
 env.config({
   path: path.join(__dirname, '..', '.env')
@@ -53,6 +54,8 @@ client.on("message", async (msg) => {
 
   await check_bot_dm_response(client, msg);
   await check_bot_channel_response(msg);
+
+  await HelpCommand.checkAndRun(msg);
 });
 
 client.login(process.env.BOT_TOKEN);

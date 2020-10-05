@@ -30,5 +30,4 @@ export const check_bot_dm_response = async (client: Client, msg: Message): Promi
   await PeriodCommands.set.checkAndRun(msg);
   await PeriodCommands.get.checkAndRun(msg);
 
-  await HelpCommand.checkAndRun(msg);
 };
