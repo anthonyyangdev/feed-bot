@@ -14,7 +14,7 @@ env.config({
 });
 
 async function start(): Promise<void> {
-  const url = "mongodb://localhost:27017/";
+  const url = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PW}@cluster0.copfc.mongodb.net/${process.env.DATABASE}?retryWrites=true&w=majority`;
   const mongooseOpts = {
     promiseLibrary: Promise,
     useUnifiedTopology: true,
@@ -34,9 +34,9 @@ start();
 const client = new Discord.Client();
 client.on("ready", () => {
   console.log(`Logged in as ${client.user?.tag}!`);
+  console.log("Client id", client.user?.id);
   checkUserUpdateEachMinute(client);
 });
-
 
 // event checks if message has been sent and reacts accordingly
 client.on("message", async (msg) => {
