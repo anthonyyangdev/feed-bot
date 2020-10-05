@@ -24,8 +24,6 @@ async function start(): Promise<void> {
   mongoose.set('useCreateIndex', true);
   mongoose.set('runValidators', true);
   await mongoose.connect(url, mongooseOpts);
-  await MessageModel.deleteMany({});
-  await UserModel.deleteMany({});
   console.log("Connected to the database");
 }
 
