@@ -23,15 +23,15 @@ async function start(): Promise<void> {
   mongoose.set('useCreateIndex', true);
   mongoose.set('runValidators', true);
   await mongoose.connect(url, mongooseOpts);
-  console.log("Connected to the database");
+  // console.log("Connected to the database");
 }
 
 start();
 
 const client = new Discord.Client();
 client.on("ready", () => {
-  console.log(`Logged in as ${client.user?.tag}!`);
-  console.log("Client id", client.user?.id);
+  // console.log(`Logged in as ${client.user?.tag}!`);
+  // console.log("Client id", client.user?.id);
   checkUserUpdateEachMinute(client);
 });
 
